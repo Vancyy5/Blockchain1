@@ -18,10 +18,10 @@ int main(int argc, char* argv[])
     if(ats == 'T' ||  ats == 't')
     {
         cout << "Iveskite teksta: ";
-        cin.ignore(); // Išvalome buffer po char įvesties
+        cin.ignore(); 
         getline(cin, ivestis);
         hashas(ivestis, isvestis);
-        cout << "\nHash rezultatas: " << isvestis << endl;
+        cout << "Rezultatas: " << isvestis << endl;
     }
     
     else if(ats == 'N' || ats == 'n')
@@ -71,7 +71,6 @@ int main(int argc, char* argv[])
 
        else if(ats == 'N' || ats == 'n')
        {
-        // Patikriname, ar buvo perduotas failo pavadinimas per komandų eilutę
         string filename;
 
         if(argc >= 2) {
@@ -91,28 +90,24 @@ int main(int argc, char* argv[])
         }
 
         cout << "Skaitomas failas: " << filepath << endl;
-        
-        // Skaitome visą failo turinį
+    
         string line;
         string fileContent;
-        while(getline(file, line)) {
+        while(getline(file, line)) 
+        {
             fileContent += line + "\n";
         }
         file.close();
         
-        // Pašaliname paskutinį \n jei failas ne tuščias
         if (!fileContent.empty() && fileContent.back() == '\n')
          {
             fileContent.pop_back();
         }
         
-     
         hashas(fileContent, isvestis);
         
         //patvarkyk isvedima ĄĄĄ
-        cout << "\nFailo turinys: \"" << fileContent << "\"" << endl;
-        cout << "Hash rezultatas: " << isvestis << endl;
-        cout << "Hash ilgis: " << isvestis.length() << " simboliai" << endl;
+        cout << "Rezultatas: " << isvestis << endl;
        }
     }
     

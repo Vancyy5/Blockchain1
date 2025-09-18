@@ -1,34 +1,44 @@
 #include "funkcijos.h"
 
-// Visi galimi simboliai
 vector<char> allChars;
 
 void hashas (const string &ivestis, string &isvestis)
 {
     for (char c : ivestis)
     {
-        int ascii = static_cast<int>(c);  
-        cout << ascii << " ";
-        
-        isvestis += to_string(ascii);
+        int ascii = static_cast<int>(c);   
+        if(isvestis.length() <64)       //nu negerai nes kur reikiami simboliai?????
+        {
+           isvestis += to_string(ascii); //idek ir lietuviskas
+        }
     }
-}
 
-void Chars() 
-{
-    allChars.clear();
+    while(isvestis.length() <64)
+        {
+            isvestis +=  isvestis;
+        }
+
+    //nuo 64 iki 127
+
+    //negalima sumazint nes gali prarast reikalinga simboli 
+    //mums reikia min 128 simboliu iki 192
+    string isvestisnaujas1;
+    string isvestisnaujas2;
     
-    for (int i = 32; i <= 126; i++) {
-        allChars.push_back(static_cast<char>(i));
-    }
-    
+    for (int i=0; i<isvestis.length(); i+=2)
+     {
+        if ( i%2 == 0 ) isvestisnaujas1+=isvestis[i];
+        if ( i%2 == 1 ) isvestisnaujas1+=isvestis[i];
+     }
+
+
 }
 
 void initAllChars() 
 {
     allChars.clear();
-    
-    for (int i = 32; i <= 126; i++) {
+      
+    for (int i = 33; i <= 126; i++) {
         allChars.push_back(static_cast<char>(i));
     }
 }
@@ -42,19 +52,25 @@ string generateRandomString(size_t length, mt19937 &rng)
     vector<string> lithuanianChars = {"ą", "č", "ę", "ė", "į", "š", "ų", "ū", "ž", 
                                       "Ą", "Č", "Ę", "Ė", "Į", "Š", "Ų", "Ū", "Ž"};
     
-    uniform_int_distribution<size_t> asciiDist(0, allChars.size() - 1);
-    uniform_int_distribution<size_t> ltDist(0, lithuanianChars.size() - 1);
-    uniform_int_distribution<int> typeDist(0, 9); 
+    vector<string> allPossibleChars;
+
+    for (char c : allChars) 
+    {
+        allPossibleChars.push_back(string(1, c));
+    }
+    
+    for (const string& ltChar : lithuanianChars) 
+    {
+        allPossibleChars.push_back(ltChar);
+    }
+    
+    uniform_int_distribution<size_t> charDist(0, allPossibleChars.size() - 1);
     
     string result;
     result.reserve(length * 2); // Rezervuojame daugiau vietos UTF-8 simboliams
     
     for (size_t i = 0; i < length; i++) {
-        if (typeDist(rng) < 8) { 
-            result += allChars[asciiDist(rng)];
-        } else { 
-            result += lithuanianChars[ltDist(rng)];
-        }
+        result += allPossibleChars[charDist(rng)];
     }
     
     return result;
@@ -62,8 +78,12 @@ string generateRandomString(size_t length, mt19937 &rng)
 
 void createSingleCharFiles() 
 {
-    // Sukuriame aplanką jei jo nėra
-    system("mkdir -p failai");
+   
+    #ifdef _WIN32
+        system("if not exist failai mkdir failai >nul 2>&1");
+    #else
+        system("mkdir -p failai >/dev/null 2>&1");
+    #endif
     
     vector<string> testChars = {"a", "b", "ą"}; 
     vector<string> fileNames = {"single_a.txt", "single_b.txt", "single_lt.txt"};
@@ -83,7 +103,11 @@ void createSingleCharFiles()
 
 void createLargeRandomFiles() 
 {
-     system("mkdir -p failai");
+    #ifdef _WIN32
+        system("if not exist failai mkdir failai >nul 2>&1");
+    #else
+        system("mkdir -p failai >/dev/null 2>&1");
+    #endif
     
     random_device rd;
     mt19937 rng(rd());
@@ -108,26 +132,34 @@ void createLargeRandomFiles()
     }
 }
 
-void createSimilarFiles() 
+void createSimilarFiles() //tikrai kazkur klaida su lietuviskom raidem
 {
-    cout << "Kuriami failai, kurie skiriasi tik viduriniu simboliu..." << endl;
-    
-    system("mkdir -p failai");
+    #ifdef _WIN32
+        system("if not exist failai mkdir failai >nul 2>&1");
+    #else
+        system("mkdir -p failai >/dev/null 2>&1");
+    #endif
     
     random_device rd;
     mt19937 rng(rd());
     
     const size_t fileSize = 2000;
     
-    // Generuojame bazinį stringą
     string baseString = generateRandomString(fileSize, rng);
     
-
     size_t middlePos = fileSize / 2;
     
-    // 1. Failas su lietuviška raide viduryje
+    while (middlePos < baseString.length() && 
+           (static_cast<unsigned char>(baseString[middlePos]) > 127)) {
+        middlePos++; 
+    }
+    if (middlePos >= baseString.length()) middlePos = fileSize / 2;
+    
+    baseString[middlePos] = 'X';
+    
     string modified1 = baseString;
-    modified1[middlePos] = 'a'; 
+    modified1.erase(middlePos, 1);
+    modified1.insert(middlePos, "ą");
     
     ofstream file1("failai/similar_middle_lt.txt");
     if (file1.is_open()) {
@@ -136,11 +168,11 @@ void createSimilarFiles()
     }
     
     string modified2 = baseString;
-    modified2[middlePos] = '9';
+    modified2[middlePos] = '2';
     
     ofstream file2("failai/similar_middle_num.txt");
     if (file2.is_open()) {
-        file2 << modified2;
+        file2 << modified2;                         //sutvarkyk idk?
         file2.close();
     }
 
@@ -150,6 +182,6 @@ void createSimilarFiles()
     ofstream file3("failai/similar_middle_special.txt");
     if (file3.is_open()) {
         file3 << modified3;
-        file3.close();;
+        file3.close();
     }
 }
