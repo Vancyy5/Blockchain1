@@ -44,6 +44,8 @@ int main(int argc, char* argv[])
           cout << "1 - vieno simbolio failai ir tuscia\n";
           cout << "2 - failai su daug simboliu\n";
           cout << "3 - failai su daug simboliu, kurie skiriasi viduriniu simboliu\n";
+          cout << "4 - failai koliziju testavimui\n";
+          cout << "5 - failai lavinos efekto testavimui\n";
           cout << "Kitas - programos pabaiga\n";
           cout << "Pasirinkimas: ";
 
@@ -57,10 +59,16 @@ int main(int argc, char* argv[])
           {
               createLargeRandomFiles();
           }
-          else if (testChoice == '3') 
+          else if (testChoice == '4') 
           {
-              createSimilarFiles();
+              generateCollisionTestPairs(); 
           }
+          
+         else if (testChoice == '5') 
+          {
+              generateAvalancheTestPairs();
+          }
+          
           else 
           {
               cout << "Programos pabaiga" << endl;

@@ -9,5 +9,7 @@ string generateRandomString(size_t length, mt19937 &rng);
 void createSingleCharFiles();
 void createLargeRandomFiles();
 void createSimilarFiles();
+void generateCollisionTestPairs();  
+void generateAvalancheTestPairs(); 
 
 #endif // FUNKCIJOS_H
