@@ -8,6 +8,7 @@
 #include <vector>
 #include <cstdlib>  
 #include <utility>  
+#include <bitset>
 
 using namespace std;
 

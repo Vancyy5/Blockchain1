@@ -4,20 +4,53 @@ vector<char> allChars;
 
 void hashas(const string &ivestis, string &isvestis)
 {
-    for (char c : ivestis)
+    isvestis.clear(); 
+    vector<int> masyvas;
+    vector<string> masyvas2; // čia saugosime dvejetainius blokus
+
+    for (size_t i = 0; i < ivestis.size(); i += 20) 
     {
-        int ascii = static_cast<int>(c);   
-        if(isvestis.length() < 64)
+        int blokas = 0;
+        string blokas2;
+
+        for (size_t j = i; j < i + 20 && j < ivestis.size(); j++) 
         {
-           isvestis += to_string(ascii);
+            // pavertimas į bitus
+            blokas2 += bitset<8>(static_cast<unsigned char>(ivestis[j])).to_string();
         }
+
+        masyvas2.push_back(blokas2); // įdedame į masyvas2
+
+        for (size_t j = i; j < i + 20 && j < ivestis.size(); j++) 
+        {
+            unsigned char c = ivestis[j];
+            bitset<8> bits(c);
+            blokas += bits.count(); // skaičiuojam '1'
+        }
+        masyvas.push_back(blokas);
     }
 
-    while(isvestis.length() < 64)
+    for (size_t i = 0; i < ivestis.size(); i += 1000)
     {
-        isvestis += isvestis;
+        int suma = 0;
+        for (size_t j = i; j < i + 1000 && j < ivestis.size(); j++)
+        {
+            suma += static_cast<int>(ivestis[j]); 
+        }
+        isvestis += to_string(suma);
     }
 
+    // išvedam rezultatus
+    for (size_t i = 0; i < masyvas.size(); i++) 
+    {
+        cout << "Blokas " << i << " suma: " << masyvas[i] << endl;
+    }
+
+    cout << "\nMasyvas2 (dvejetainiai blokai):\n";
+    for (size_t i = 0; i < masyvas2.size(); i++)
+    {
+        cout << "Blokas " << i << " bitai: " << masyvas2[i] << endl;
+    }
 }
 
 void initAllChars() 
