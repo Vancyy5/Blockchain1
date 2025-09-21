@@ -9,6 +9,8 @@
 #include <cstdlib>  
 #include <utility>  
 #include <bitset>
+#include <random>
+#include <sstream>
 
 using namespace std;
 

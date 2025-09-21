@@ -4,52 +4,90 @@ vector<char> allChars;
 
 void hashas(const string &ivestis, string &isvestis)
 {
-    isvestis.clear(); 
-    vector<int> masyvas;
-    vector<string> masyvas2; // čia saugosime dvejetainius blokus
+    isvestis.clear();
+    string seedString;
 
-    for (size_t i = 0; i < ivestis.size(); i += 20) 
-    {
-        int blokas = 0;
-        string blokas2;
-
-        for (size_t j = i; j < i + 20 && j < ivestis.size(); j++) 
-        {
-            // pavertimas į bitus
-            blokas2 += bitset<8>(static_cast<unsigned char>(ivestis[j])).to_string();
-        }
-
-        masyvas2.push_back(blokas2); // įdedame į masyvas2
-
-        for (size_t j = i; j < i + 20 && j < ivestis.size(); j++) 
-        {
-            unsigned char c = ivestis[j];
-            bitset<8> bits(c);
-            blokas += bits.count(); // skaičiuojam '1'
-        }
-        masyvas.push_back(blokas);
-    }
-
-    for (size_t i = 0; i < ivestis.size(); i += 1000)
+    // 1. kas 10 simbolių ASCII suma
+    for (size_t i = 0; i < ivestis.size(); i += 10)
     {
         int suma = 0;
-        for (size_t j = i; j < i + 1000 && j < ivestis.size(); j++)
+        for (size_t j = i; j < i + 10 && j < ivestis.size(); j++)
         {
-            suma += static_cast<int>(ivestis[j]); 
+            suma += static_cast<unsigned char>(ivestis[j]);
         }
-        isvestis += to_string(suma);
+        seedString += to_string(suma);
     }
 
-    // išvedam rezultatus
-    for (size_t i = 0; i < masyvas.size(); i++) 
+    // 2. kas 20 simbolių '1' bitų kiekis
+    for (size_t i = 0; i < ivestis.size(); i += 20)
     {
-        cout << "Blokas " << i << " suma: " << masyvas[i] << endl;
+        int ones = 0;
+        for (size_t j = i; j < i + 20 && j < ivestis.size(); j++)
+        {
+            bitset<8> bits(static_cast<unsigned char>(ivestis[j]));
+            ones += bits.count();
+        }
+        seedString += to_string(ones);
     }
 
-    cout << "\nMasyvas2 (dvejetainiai blokai):\n";
-    for (size_t i = 0; i < masyvas2.size(); i++)
+    // 3. Įvesties binary kodas
+    string binaryInput;
+    for (unsigned char c : ivestis)
     {
-        cout << "Blokas " << i << " bitai: " << masyvas2[i] << endl;
+        binaryInput += bitset<8>(c).to_string();
+    }
+
+    // prailginam, jei reikia
+    while (binaryInput.size() < 256)  
+    {
+        binaryInput += binaryInput; // kartojam
+    }
+    if (binaryInput.size() > 256)  
+        binaryInput = binaryInput.substr(0, 256);
+
+    // 4. seed'o paruošimas
+    // Paverskim seedString į kelis uint32_t
+    vector<uint32_t> seeds;
+    uint32_t temp = 0;
+    for (char c : seedString)
+    {
+        temp = temp * 131 + static_cast<unsigned char>(c); // paprastas maišymas
+        if (seeds.size() < 16) // apribojam ilgį
+            seeds.push_back(temp);
+    }
+    if (seeds.empty()) seeds.push_back(1); // jei tuščia, duodam bent 1
+
+    seed_seq seq(seeds.begin(), seeds.end());
+    mt19937 rng(seq);
+
+    // 5. Maišom binaryInput blokais ir konvertuojam į HEX
+    istringstream binStream(binaryInput);
+    string mixedBinary;
+    while (!binStream.eof())
+    {
+        string block;
+        block.resize(32, '0');
+        binStream.read(&block[0], 32);
+        size_t readBytes = binStream.gcount();
+        block.resize(readBytes);
+
+        uint32_t randVal = rng();
+        for (size_t i = 0; i < block.size(); i++)
+        {
+            int bit = block[i] - '0';
+            int rbit = (randVal >> (i % 32)) & 1;
+            bit ^= rbit;
+            mixedBinary.push_back(bit ? '1' : '0');
+        }
+    }
+
+    for (size_t i = 0; i + 4 <= mixedBinary.size(); i += 4)
+    {
+        string nibble = mixedBinary.substr(i, 4);
+        int value = stoi(nibble, nullptr, 2);
+        stringstream ss;
+        ss << hex << value;
+        isvestis += ss.str();
     }
 }
 
