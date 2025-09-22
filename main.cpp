@@ -1,7 +1,13 @@
 #include "funkcijos.h"
 
+
 int main(int argc, char* argv[]) 
 {
+    #ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8); 
+    SetConsoleCP(CP_UTF8);
+#endif
+
     string ivestis;
     string isvestis;
 
@@ -19,8 +25,11 @@ int main(int argc, char* argv[])
     {
         cout << "Iveskite teksta: ";
         cin.ignore(); 
+        
         getline(cin, ivestis);
         hashas(ivestis, isvestis);
+        cout << ivestis << endl;
+        //debugHashas(ivestis, isvestis);
         cout << "Rezultatas: " << isvestis << endl;
     }
     
@@ -113,11 +122,11 @@ int main(int argc, char* argv[])
         }
         
         hashas(fileContent, isvestis);
-        
-        //patvarkyk isvedima ĄĄĄ
+   
         cout << "Rezultatas: " << isvestis << endl;
        }
     }
-    
+
     return 0;
 }
+    

@@ -3,6 +3,7 @@
 
 #include "lib.h" 
 
+string convertLithuanianText(const string &input); 
 void hashas (const string &ivestis, string &isvestis);
 void initAllChars(); 
 string generateRandomString(size_t length, mt19937 &rng);

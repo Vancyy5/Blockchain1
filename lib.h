@@ -1,6 +1,7 @@
 #ifndef LIB_H      
 #define LIB_H
 
+
 #include <iostream>  
 #include <string>
 #include <fstream>
@@ -9,8 +10,16 @@
 #include <cstdlib>  
 #include <utility>  
 #include <bitset>
-#include <random>
 #include <sstream>
+#include <map>
+#include <locale>
+#include <codecvt>
+#include <iomanip>
+#include <io.h>     
+#include <fcntl.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace std;
 
