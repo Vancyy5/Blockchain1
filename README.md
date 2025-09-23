@@ -57,12 +57,11 @@ Patikrink išvedimo dydį – nepriklausomai nuo įvedimo, rezultatas visada tok
 
 Panaudojus šiuos failus gaunami hash'ai:
 
-1000 simbolių stringo failo [text](failai/large_1000.txt) 4682a22eb69d4e6414289966b2d2e79c12fbe908d15a2a0f5e9fe7d90ffe71f9
+1000 simbolių stringo failo large_1000.txt 4682a22eb69d4e6414289966b2d2e79c12fbe908d15a2a0f5e9fe7d90ffe71f9
 
-vieno simbolio failo [single_a.txt](failai/single_a.txt)  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
+vieno simbolio failo single_a.txt  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
 
-tuščio failo [text](failai/empty.txt)
-b5d07eb174d5a3692ee5e86d83b3049b424df2d95fcac55b43ee3e51663e279b
+tuščio failo empty.txt b5d07eb174d5a3692ee5e86d83b3049b424df2d95fcac55b43ee3e51663e279b
 
 __Rezultatas__ : visada būna to pačio ilgio su visais failais(64 simbolių hex formatu).
 ---
@@ -70,7 +69,7 @@ __Rezultatas__ : visada būna to pačio ilgio su visais failais(64 simbolių hex
 
 Patikrink deterministiškumą – tas pats failas duoda tą patį hash’ą,
 
-Paėmus failą [single_a.txt](failai/single_a.txt) visada išlieka tas pats hash'as :  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
+Paėmus failą single_a.txt visada išlieka tas pats hash'as :  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
 
 __Rezultatas__: mano hash'as yra deterministinis. 
 ---
@@ -88,7 +87,7 @@ __Rezultatas__: Tik kai pasiekia 128 eilučių, paryškėja užtruktas laikas
 ---
 ## 4. Kolizijų paieška
 
-Naudojamas failas [text](failai/collision_pairs.txt), kuriame yra po 100 000 atsitiktinių string porų, kurių ilgis būtų: 10, 100, 500, 1000 simbolių.
+Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių string porų, kurių ilgis būtų: 10, 100, 500, 1000 simbolių.
 
 Žemiau pateikta nuotrauka su gautais rezultatais.
 
@@ -98,7 +97,7 @@ __Rezultatas__: nerandami jokios kolizijos iš viso 400 000 atsistiktinių strin
 ---
 ## 5. Lavinos efektas
 
-Naudojamas failas failai/avalanche_test_pairs.txt, kuriame yra string 100 000 porų, kurių ilgiai yra 10, 50, 100, 500.
+Naudojamas failas avalanche_test_pairs.txt, kuriame yra string 100 000 porų, kurių ilgiai yra 10, 50, 100, 500.
 
 Žemiau pateikta nuotrauka, kurioje suskaičiuota, kiek procentų skiriasi gautieji porų hash'ai:
 1. bit'ų lygmeniu,
