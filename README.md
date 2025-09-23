@@ -132,7 +132,7 @@ Hash'as atsparus, kai programa bando atspėti (bruteforce) originalų tekstą pa
 # Išvados:
 ---
 ## Stiprybės:
-Konsistenti išvestis - visada 256 bitų
+Pastovi išvestis - visada 256 bitų
 
 Deterministinė - patikimai veikia
 
