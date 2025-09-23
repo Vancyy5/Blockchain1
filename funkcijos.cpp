@@ -59,10 +59,10 @@ void hashas(const string &ivestis, string &isvestis)
     string konvertuotasIvestis = convertLithuanianText(ivestis);
 
     string seedString;
-
+    string seedui;
     if (!konvertuotasIvestis.empty()) {
-        // kas 10 simbolių ASCII suma
-        for (size_t i = 0; i < konvertuotasIvestis.size(); i += 10) {
+        // kas 1000 simbolių ASCII suma
+        for (size_t i = 0; i < konvertuotasIvestis.size(); i += 1000) {
             int suma = 0;
             for (size_t j = i; j < i + 10 && j < konvertuotasIvestis.size(); j++) {
                 suma += static_cast<unsigned char>(konvertuotasIvestis[j]);
@@ -78,9 +78,9 @@ void hashas(const string &ivestis, string &isvestis)
                 ones += bits.count();
             }
             seedString += to_string(ones);
+            seedui+= to_string(ones);
         }
     } else {
-        // tuščiam įvesčiui naudojame fiksuotą seed
         seedString = "0";
     }
 
@@ -96,10 +96,20 @@ void hashas(const string &ivestis, string &isvestis)
     }
 
     // prailginam iki 256 bitų
-    while (binaryInput.size() < 256) binaryInput += binaryInput;
-    if (binaryInput.size() > 256) binaryInput = binaryInput.substr(0, 256);
+    string originalBinary = binaryInput;
+    while (binaryInput.size() < 256) {
+        string toAdd = originalBinary;
+        // XOR su jau esančiais bitais
+        for (size_t i = 0; i < toAdd.size() && binaryInput.size() < 256; i++) {
+            char newBit = (binaryInput[i % binaryInput.size()] == toAdd[i]) ? '0' : '1';
+            binaryInput += newBit;
+        }
+    }
+    if (binaryInput.size() > 256) {
+        binaryInput = binaryInput.substr(0, 256);
+    }
 
-    uint32_t mySeed = safeStringToUint32(seedString);
+    uint32_t mySeed = safeStringToUint32(seedString, seedui);
     mt19937 rng(mySeed);
 
     // Maišymas
@@ -123,25 +133,21 @@ void hashas(const string &ivestis, string &isvestis)
         isvestis += ss.str();
     }
 }
-uint32_t safeStringToUint32(const string& str) 
+uint32_t safeStringToUint32(const string& str,const string& seedui) 
 {
-    if (str.empty()) {
-        return 12345; // Default seed tuščiam string'ui
+     uint32_t seed = 0;
+    for (unsigned char c : seedui) {
+        seed = seed * 31 + c; 
     }
+
+    uint32_t hash = seed;
+
     
-    // Jei string per didelis, imame tik paskutinius 9 simbolius
-    string truncated = str;
-    if (truncated.length() > 9) {
-        truncated = truncated.substr(truncated.length() - 9);
+    for (unsigned char c : str) 
+    {
+        hash = hash * seed + c; 
     }
+
+    return hash;
     
-    try {
-        return static_cast<uint32_t>(stoul(truncated));
-    } catch (const std::exception& e) {
-        uint32_t hash = 0;
-        for (char c : truncated) {
-            hash = hash * 31 + static_cast<unsigned char>(c);
-        }
-        return hash;
-    }
 }

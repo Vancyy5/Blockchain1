@@ -207,6 +207,6 @@ Lietuviškų simbolių palaikymas
 
 Lavinos efektas nepakankamai stiprus ir nepastovus. Vidutinis skirtumas 45-47%. 
 
-Seed generavimas nuspėjamas.
+Seed generavimas nuspėjamas
 
 128 eilučių failas užtruko pastebimai ilgiau (neefektingas).
