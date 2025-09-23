@@ -88,7 +88,7 @@ void testCollisions() {
     }
 
     vector<int> lengths = {10, 100, 500, 1000};
-    const int pairsPerLength = 25000;
+    const int pairsPerLength = 100000;
     
     cout << setw(15) << "Ilgis" << setw(15) << "Kolizijos" << setw(15) << "Tikimybė %" << endl;
     cout << string(45, '-') << endl;
@@ -121,7 +121,6 @@ void testCollisions() {
             // Tikriname kolizijas tarp str1 ir str2
             if (hash1 == hash2) {
                 collisions++;
-                cout << "KOLIZIJA RASTA! Ilgis: " << length << endl;
             }
             
             totalPairs++;
@@ -134,7 +133,6 @@ void testCollisions() {
         cout << setw(15) << length << setw(15) << collisions 
              << setw(14) << fixed << setprecision(4) << probability << "%" << endl;
     }
-    
     collisionFile.close();
 }
 

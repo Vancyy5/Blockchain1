@@ -192,7 +192,7 @@ void generateCollisionTestPairs()
     mt19937 rng(rd());
     
     vector<size_t> lengths = {10, 100, 500, 1000};
-    const size_t pairsPerLength = 25000; // 25k porų kiekvienam ilgiui = 100k iš viso
+    const size_t pairsPerLength = 100000; // 100000k porų kiekvienam ilgiui = 400k iš viso
     
     ofstream outFile("failai/collision_pairs.txt", ios::out | ios::binary);
     if (!outFile.is_open()) {
