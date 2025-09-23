@@ -1,8 +1,60 @@
-# Mano hash'as
+# MANO HASH'AS
 
-Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. 
+Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. Ši versija yra v0.1, kurioje sukūriau savo originalu hash generatorių, nežiūrint kaip veikia patikimi ir geri generatoriai.
 
 ---
+# VEIKIMO APRAŠYMAS
+---
+__Pseudo-kodu:__ 
+```cpp 
+function hashas(ivestis, isvestis)
+{
+    isvestis.clear()
+    konvertuotasIvestis = convertLithuanianText(ivestis)
+
+    if konvertuotasIvestis is not empty
+    {
+        seedString = ""
+        for kiekviena 10 simbolių grupė in konvertuotasIvestis
+            seedString += ASCII suma grupėje
+        for kiekviena 20 simbolių grupė in konvertuotasIvestis
+            seedString += '1' bitų skaičius grupėje
+    }
+    else
+        seedString = "0"
+
+    binaryInput = binary representation of konvertuotasIvestis
+    if binaryInput is empty
+        binaryInput = "10000000"
+    pad binaryInput to 256 bits
+
+    mySeed = safeStringToUint32(seedString)
+    rng = mt19937(mySeed)
+
+    mixedBinary = ""
+    for kiekviena 32 bitų bloką in binaryInput
+        randVal = rng()
+        for kiekvienas bitas bloką
+            bit ^= randVal bit
+            mixedBinary += bit
+
+    isvestis = convert mixedBinary to HEX
+}
+
+function safeStringToUint32(str)
+{
+    if str is empty
+        return 12345
+    truncate str to last 9 characters if too long
+    try convert str to uint32
+    catch error
+        hash = 0
+        for kiekvienas simbolis c in str
+            hash = hash * 31 + c
+        return hash
+}
+```
+__Žodžiais:__
 
 ## 1. Lietuviškų simbolių žemėlapis
 
@@ -23,6 +75,7 @@ Hash funkcija generuoja atsitiktinių bitų generatoriaus sėklą pagal įvestį
 - Susumuoja ASCII kodus kas 10 simbolių.  
 - Suskaičiuoja „1“ bitų kiekį kas 20 simbolių.  
 - Gautas skaičius naudojamas kaip sėkla atsitiktinių skaičių generatoriui.
+- Jeigu seed'as didesnis negu 9 simboliai, ima paskutinius 9.
 
 ---
 
@@ -49,7 +102,7 @@ Hash funkcija generuoja atsitiktinių bitų generatoriaus sėklą pagal įvestį
 Maišyta binarinė seka konvertuojama į šešioliktainę (HEX) eilutę. Kiekvieni 4 binariniai bitai paverčiami į vieną HEX simbolį. Galutinis rezultatas yra unikalus hash kodas.
 
 ---
-# Mano hash'o testavimas
+# MANO HASH'O TESTAVIMAS
 ---
 ## 1. Išvedimo dydys
 
@@ -128,7 +181,7 @@ Negalima žinant gautą hash'ą ir saltą atpažinti įvesties.
 
 Hash'as atsparus, kai programa bando atspėti (bruteforce) originalų tekstą pagal jo hash reikšmę.
 ---
-# Išvados:
+# IŠVADOS:
 ---
 ## Stiprybės:
 Pastovi išvestis - visada 256 bitų
