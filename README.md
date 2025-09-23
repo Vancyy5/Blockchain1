@@ -117,6 +117,8 @@ vieno simbolio failo single_a.txt  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad6
 tuščio failo empty.txt b5d07eb174d5a3692ee5e86d83b3049b424df2d95fcac55b43ee3e51663e279b
 
 __Rezultatas__ : visada būna to pačio ilgio su visais failais(64 simbolių hex formatu).
+
+
 ---
 ## 2. Deterministiškumas
 
@@ -125,6 +127,7 @@ Patikrink deterministiškumą – tas pats failas duoda tą patį hash’ą,
 Paėmus failą single_a.txt visada išlieka tas pats hash'as :  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
 
 __Rezultatas__: mano hash'as yra deterministinis. 
+
 ---
 ## 3. Efektyvumas
 
@@ -137,6 +140,7 @@ Išbandytas konstitucija.txt failas su 1, 2, 4, 8, 16, 32, 64 ir 128 eilutėmis.
 ![alt text](<nuotraukos/Screenshot 2025-09-23 191732.png>)
 
 __Rezultatas__: Tik kai pasiekia 128 eilučių, paryškėja užtruktas laikas
+
 ---
 ## 4. Kolizijų paieška
 
@@ -147,6 +151,7 @@ Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių stri
 ![alt text](<nuotraukos/Screenshot 2025-09-23 192104.png>)
 
 __Rezultatas__: nerandami jokios kolizijos iš viso 400 000 atsistiktinių string porų. 
+
 ---
 ## 5. Lavinos efektas
 
@@ -180,6 +185,7 @@ __Rezultatas__:
 Negalima žinant gautą hash'ą ir saltą atpažinti įvesties.
 
 Hash'as atsparus, kai programa bando atspėti (bruteforce) originalų tekstą pagal jo hash reikšmę.
+
 ---
 # IŠVADOS:
 ---
