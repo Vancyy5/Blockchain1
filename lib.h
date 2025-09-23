@@ -17,6 +17,10 @@
 #include <iomanip>
 #include <io.h>     
 #include <fcntl.h>
+#include <ctime>
+#include <charconv>
+#include <algorithm>
+#include <numeric>
 #ifdef _WIN32
 #include <windows.h>
 #endif

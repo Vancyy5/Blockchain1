@@ -215,7 +215,6 @@ void generateCollisionTestPairs()
     outFile.close();
 }
 
-// NAUJA FUNKCIJA: Lavinos efekto testui
 void generateAvalancheTestPairs() 
 {
     #ifdef _WIN32
@@ -271,7 +270,6 @@ void generateAvalancheTestPairs()
             outFile << str1 << " " << str2 << "\n";
             
         }
-        outFile << "\n";
     }
     
     outFile.close();

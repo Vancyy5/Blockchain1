@@ -1,6 +1,7 @@
 #include "funkcijos.h"
 #include "failugeneravimas.h"
 #include "laikas.h"
+#include "testavimas.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -12,7 +13,60 @@ int main(int argc, char* argv[])
     string ivestis;
     string isvestis;
 
-    cout << "Ar norite duomenis ivesti ranka?(t/n)" << endl;
+    cout << "Ar norite atlikti testavimus? (t/n): ";
+    char testChoice;
+    cin >> testChoice;
+
+    if (testChoice == 't' || testChoice == 'T') {
+        cout << "\nPasirinkite testavimo tipą:" << endl;
+        cout << "1 - Efektyvumo testavimas (su konstitucija.txt)" << endl;
+        cout << "2 - Kolizijų paieška" << endl;
+        cout << "3 - Lavinos efekto testavimas" << endl;
+        cout << "4 - Negrįžtamumo demonstracija" << endl;
+        cout << "5 - Visi testai" << endl;
+        cout << "Pasirinkimas: ";
+        
+        char choice;
+        cin >> choice;
+        
+        switch(choice) {
+            case '1':
+                testEfficiency();
+                break;
+            case '2':
+                testCollisions();
+                break;
+            case '3':
+                testAvalancheEffect();
+                break;
+            case '4':
+                testIrreversibility();
+                break;
+            case '5':
+                testEfficiency();
+                testCollisions();
+                testAvalancheEffect();
+                testIrreversibility();
+                break;
+            default:
+                cout << "Netinkamas pasirinkimas!" << endl;
+                break;
+        }
+        
+        cout << "\nAr norite tęsti su įprastomis funkcijomis? (t/n): ";
+        cin >> testChoice;
+        while (testChoice != 't' && testChoice != 'T' && testChoice != 'n' && testChoice != 'N') 
+    {
+        cout << "Netinkama ivestis. Bandykite dar karta: ";
+        cin >> testChoice;
+    }
+        if (testChoice == 'n' || testChoice == 'N') 
+        {
+            return 0;
+        }
+    }
+
+    cout << "\nAr norite duomenis ivesti ranka?(t/n)" << endl;
     char ats;
     cin >> ats;
 
@@ -67,6 +121,10 @@ int main(int argc, char* argv[])
           {
               createLargeRandomFiles();
           }
+          else if (testChoice == '3') 
+          {
+              createSimilarFiles();
+          }
           else if (testChoice == '4') 
           {
               generateCollisionTestPairs(); 
@@ -104,8 +162,6 @@ int main(int argc, char* argv[])
             cerr << "Klaida: Nepavyko atidaryti failo: " << filename << endl;
             return 1;
         }
-
-        cout << "Skaitomas failas: " << filepath << endl;
     
         string line;
         string fileContent;
@@ -120,12 +176,32 @@ int main(int argc, char* argv[])
             fileContent.pop_back();
         }
         
+        Laikas hashTimer("Hash'avimas");
+        hashTimer.pradeti();
         hashas(fileContent, isvestis);
+        hashTimer.baigti();
+        
+        cout << "Hash rezultatas: " << isvestis << endl;
    
-        cout << "Rezultatas: " << isvestis << endl;
+        // Sukuriame failaipo katalogą jei neegzistuoja
+        #ifdef _WIN32
+            system("if not exist failaipo mkdir failaipo >nul 2>&1");
+        #else
+            system("mkdir -p failaipo >/dev/null 2>&1");
+        #endif
+        
+        string outpath = "failaipo/" + filename;  // toks pat pavadinimas
+        ofstream outfile(outpath);
+        if (!outfile.is_open()) 
+        {
+            cerr << "Klaida: nepavyko sukurti failo: " << outpath << endl;
+            return 1;
+        }
+
+        outfile << isvestis << endl;
+        outfile.close();
        }
     }
 
     return 0;
 }
-    

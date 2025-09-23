@@ -52,30 +52,36 @@ string convertLithuanianText(const string &input) {
 }
 
 
-void hashas(const string &ivestis, string &isvestis) {
+void hashas(const string &ivestis, string &isvestis) 
+{
     isvestis.clear();
 
     string konvertuotasIvestis = convertLithuanianText(ivestis);
 
     string seedString;
 
-    // kas 10 simbolių ASCII suma
-    for (size_t i = 0; i < konvertuotasIvestis.size(); i += 10) {
-        int suma = 0;
-        for (size_t j = i; j < i + 10 && j < konvertuotasIvestis.size(); j++) {
-            suma += static_cast<unsigned char>(konvertuotasIvestis[j]);
+    if (!konvertuotasIvestis.empty()) {
+        // kas 10 simbolių ASCII suma
+        for (size_t i = 0; i < konvertuotasIvestis.size(); i += 10) {
+            int suma = 0;
+            for (size_t j = i; j < i + 10 && j < konvertuotasIvestis.size(); j++) {
+                suma += static_cast<unsigned char>(konvertuotasIvestis[j]);
+            }
+            seedString += to_string(suma);
         }
-        seedString += to_string(suma);
-    }
 
-    // kas 20 simbolių '1' bitų kiekis
-    for (size_t i = 0; i < konvertuotasIvestis.size(); i += 20) {
-        int ones = 0;
-        for (size_t j = i; j < i + 20 && j < konvertuotasIvestis.size(); j++) {
-            bitset<8> bits(static_cast<unsigned char>(konvertuotasIvestis[j]));
-            ones += bits.count();
+        // kas 20 simbolių '1' bitų kiekis
+        for (size_t i = 0; i < konvertuotasIvestis.size(); i += 20) {
+            int ones = 0;
+            for (size_t j = i; j < i + 20 && j < konvertuotasIvestis.size(); j++) {
+                bitset<8> bits(static_cast<unsigned char>(konvertuotasIvestis[j]));
+                ones += bits.count();
+            }
+            seedString += to_string(ones);
         }
-        seedString += to_string(ones);
+    } else {
+        // tuščiam įvesčiui naudojame fiksuotą seed
+        seedString = "0";
     }
 
     // Įvesties binary kodas
@@ -84,20 +90,23 @@ void hashas(const string &ivestis, string &isvestis) {
         binaryInput += bitset<8>(c).to_string();
     }
 
+    // jeigu tuščias, sukuriame bent 1 baitą (10000000)
+    if (binaryInput.empty()) {
+        binaryInput = "10000000";
+    }
+
     // prailginam iki 256 bitų
     while (binaryInput.size() < 256) binaryInput += binaryInput;
     if (binaryInput.size() > 256) binaryInput = binaryInput.substr(0, 256);
 
-   
-    uint32_t mySeed = stoul(seedString);
+    uint32_t mySeed = safeStringToUint32(seedString);
     mt19937 rng(mySeed);
 
     // Maišymas
     string mixedBinary;
     for (size_t i = 0; i < binaryInput.size(); i += 32) {
         uint32_t randVal = rng();
-        for (size_t j = 0; j < 32 && i + j < binaryInput.size(); j++) 
-        {
+        for (size_t j = 0; j < 32 && i + j < binaryInput.size(); j++) {
             int bit = binaryInput[i + j] - '0';
             int rbit = (randVal >> j) & 1;
             bit ^= rbit;
@@ -106,8 +115,7 @@ void hashas(const string &ivestis, string &isvestis) {
     }
 
     // konversija į HEX
-    for (size_t i = 0; i + 4 <= mixedBinary.size(); i += 4) 
-    {
+    for (size_t i = 0; i + 4 <= mixedBinary.size(); i += 4) {
         string nibble = mixedBinary.substr(i, 4);
         int value = stoi(nibble, nullptr, 2);
         stringstream ss;
@@ -115,4 +123,25 @@ void hashas(const string &ivestis, string &isvestis) {
         isvestis += ss.str();
     }
 }
-
+uint32_t safeStringToUint32(const string& str) 
+{
+    if (str.empty()) {
+        return 12345; // Default seed tuščiam string'ui
+    }
+    
+    // Jei string per didelis, imame tik paskutinius 9 simbolius
+    string truncated = str;
+    if (truncated.length() > 9) {
+        truncated = truncated.substr(truncated.length() - 9);
+    }
+    
+    try {
+        return static_cast<uint32_t>(stoul(truncated));
+    } catch (const std::exception& e) {
+        uint32_t hash = 0;
+        for (char c : truncated) {
+            hash = hash * 31 + static_cast<unsigned char>(c);
+        }
+        return hash;
+    }
+}

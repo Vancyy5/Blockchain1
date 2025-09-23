@@ -420,4 +420,5 @@ FodyWeavers.xsd
 *.exe
 *.o
 failai/
-papildomifailai/
+failaipo/
+nuotraukos/

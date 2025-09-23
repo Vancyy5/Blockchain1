@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra -finput-charset=UTF-8 -fexec-charset=UTF-8
 TARGET = main
 
-SOURCES = main.cpp funkcijos.cpp failugeneravimas.cpp laikas.cpp
+SOURCES = main.cpp funkcijos.cpp failugeneravimas.cpp laikas.cpp testavimas.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 all: $(TARGET)
@@ -13,7 +13,7 @@ $(TARGET): $(OBJECTS)
 %.o: %.cpp %.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-main.o: main.cpp funkcijos.h failugeneravimas.h laikas.h
+main.o: main.cpp funkcijos.h failugeneravimas.h laikas.h testavimas.h
 	$(CXX) $(CXXFLAGS) -c main.cpp -o main.o
 
 funkcijos.o: funkcijos.cpp funkcijos.h
@@ -24,6 +24,9 @@ failugeneravimas.o: failugeneravimas.cpp failugeneravimas.h
 
 laikas.o: laikas.cpp laikas.h
 	$(CXX) $(CXXFLAGS) -c laikas.cpp -o laikas.o
+
+testavimas.o: testavimas.cpp testavimas.h
+	$(CXX) $(CXXFLAGS) -c testavimas.cpp -o testavimas.o
 
 run: $(TARGET)
 	./$(TARGET)
