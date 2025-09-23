@@ -1,11 +1,11 @@
 # MANO HASH'AS
 
-Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. Ši versija yra v0.1, kurioje sukūriau savo originalu hash generatorių, nežiūrint kaip veikia patikimi ir geri generatoriai.
+Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. Ši versija yra v0.1, kurioje sukūriau savo originalų hash generatorių, nežiūrint kaip veikia patikimi ir geri generatoriai.
 
 ---
 # VEIKIMO APRAŠYMAS
 ---
-__Pseudo-kodu:__ 
+## __Pseudo-kodu:__ 
 ```cpp 
 function hashas(ivestis, isvestis)
 {
@@ -54,7 +54,7 @@ function safeStringToUint32(str)
         return hash
 }
 ```
-__Žodžiais:__
+## __Žodžiais:__
 
 ## 1. Lietuviškų simbolių žemėlapis
 
@@ -75,7 +75,7 @@ Hash funkcija generuoja atsitiktinių bitų generatoriaus sėklą pagal įvestį
 - Susumuoja ASCII kodus kas 10 simbolių.  
 - Suskaičiuoja „1“ bitų kiekį kas 20 simbolių.  
 - Gautas skaičius naudojamas kaip sėkla atsitiktinių skaičių generatoriui.
-- Jeigu seed'as didesnis negu 9 simboliai, ima paskutinius 9.
+- Jeigu seed'as didesnis negu 9 simboliai, imami paskutiniai 9 simboliai.
 
 ---
 
@@ -93,7 +93,7 @@ Hash funkcija generuoja atsitiktinių bitų generatoriaus sėklą pagal įvestį
    - Jei bitai skirtingi → rezultatas 1
    - Jei bitai vienodi → rezultatas 0
 4. Rezultatas įrašomas į `mixedBinary` seką.
-5. Jei likę mažiau nei 32 bitai, imamas tiek, kiek yra.
+5. Jei likę mažiau nei 32 bitai, imami tiek, kiek yra.
 
 ---
 
@@ -106,17 +106,20 @@ Maišyta binarinė seka konvertuojama į šešioliktainę (HEX) eilutę. Kiekvie
 ---
 ## 1. Išvedimo dydys
 
-Patikrink išvedimo dydį – nepriklausomai nuo įvedimo, rezultatas visada tokio pat ilgio.
+Patikrinamas išvedimo dydis – nepriklausomai nuo įvedimo, rezultatas visada tokio pat ilgio.
 
 Panaudojus šiuos failus gaunami hash'ai:
 
-1000 simbolių stringo failo large_1000.txt 4682a22eb69d4e6414289966b2d2e79c12fbe908d15a2a0f5e9fe7d90ffe71f9
+1000 simbolių stringo failo large_1000.txt :
+4682a22eb69d4e6414289966b2d2e79c12fbe908d15a2a0f5e9fe7d90ffe71f9
 
-vieno simbolio failo single_a.txt  7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
+vieno simbolio failo single_a.txt  :
+7ccb4dd6fc3a1e80b452c0976c108a6b746f23efb3ad657eaffaee2b5362a081
 
-tuščio failo empty.txt b5d07eb174d5a3692ee5e86d83b3049b424df2d95fcac55b43ee3e51663e279b
+tuščio failo empty.txt  :
+b5d07eb174d5a3692ee5e86d83b3049b424df2d95fcac55b43ee3e51663e279b
 
-__Rezultatas__ : visada būna to pačio ilgio su visais failais(64 simbolių hex formatu).
+__Rezultatas__ : visada būna to pačio ilgio su visais failais (64 simbolių hex formatu).
 
 
 ---
@@ -133,36 +136,36 @@ __Rezultatas__: mano hash'as yra deterministinis.
 
 Išbandytas konstitucija.txt failas su 1, 2, 4, 8, 16, 32, 64 ir 128 eilutėmis.
 
-Žemiau pateikti grafikai su gautais vidurkiais 5 bandymu.
+Žemiau pateikti grafikai su gautais vidurkiais 5 bandymų.
 
-![Nuotrauka](nuotraukos/Screenshot 2025-09-23 183824.png)
+![Nuotrauka](<nuotraukos/Screenshot 2025-09-23 183824.png>)
 
 ![alt text](<nuotraukos/Screenshot 2025-09-23 191732.png>)
 
-__Rezultatas__: Tik kai pasiekia 128 eilučių, paryškėja užtruktas laikas
+__Rezultatas__: Tik kai pasiekia 128 eilučių, paryškėja užtruktas laikas.
 
 ---
 ## 4. Kolizijų paieška
 
-Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių string porų, kurių ilgis būtų: 10, 100, 500, 1000 simbolių.
+Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių string porų, kurių ilgis yra: 10, 100, 500, 1000 simbolių.
 
 Žemiau pateikta nuotrauka su gautais rezultatais.
 
 ![alt text](<nuotraukos/Screenshot 2025-09-23 192104.png>)
 
-__Rezultatas__: nerandami jokios kolizijos iš viso 400 000 atsistiktinių string porų. 
+__Rezultatas__: nerandamos jokios kolizijos iš visų 400 000 atsistiktinių string porų. 
 
 ---
 ## 5. Lavinos efektas
 
-Naudojamas failas avalanche_test_pairs.txt, kuriame yra string 100 000 porų, kurių ilgiai yra 10, 50, 100, 500.
+Naudojamas failas avalanche_test_pairs.txt, kuriame yra 100 000 string porų, kurių ilgiai yra 10, 50, 100, 500 ir skiriasi atsitiktiniu vienu simboliu tarpusavyje.
 
 Žemiau pateikta nuotrauka, kurioje suskaičiuota, kiek procentų skiriasi gautieji porų hash'ai:
 1. bit'ų lygmeniu,
 2. hex’ų lygmeniu.
 ir parodytos minimalios, maksimalios ir vidutines skirtingumo reikšmės.
 
-![Nuotrauka](nuotraukos/Screenshot 2025-09-23 183902.png)
+![Nuotrauka](<nuotraukos/Screenshot 2025-09-23 183902.png>)
 
 __Rezultatas__: 
 Lavinos efektas yra stipresnis trumpesniuose duomenų blokuose.
@@ -206,4 +209,4 @@ Lavinos efektas nepakankamai stiprus ir nepastovus. Vidutinis skirtumas 45-47%.
 
 Seed generavimas nuspėjamas.
 
-128 eilučių failas užtruko pastebimai ilgiau (ne toks efektingas).
+128 eilučių failas užtruko pastebimai ilgiau (neefektingas).
