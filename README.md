@@ -177,7 +177,7 @@ Max bitų pokytis išlieka panašus nepaisant ilgio.
 
 ![Nuotrauka](<nuotraukos/Screenshot 2025-09-23 183902.png>)
 
-Ir taip pat kaip reaguoja kaip ieškomas hashas, prasidedančiu iš tų pačių simbolių po 100000 bandymų.
+Ir taip pat kaip reaguoja ieškomas hashas, prasidedantis iš tų pačių simbolių po 100000 bandymų.
 
 ![alt text](<nuotraukos/Screenshot 2025-09-23 183929.png>)
 
