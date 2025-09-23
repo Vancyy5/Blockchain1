@@ -1,5 +1,6 @@
 #include "funkcijos.h"
-
+#include "failugeneravimas.h"
+#include "laikas.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -28,8 +29,6 @@ int main(int argc, char* argv[])
         
         getline(cin, ivestis);
         hashas(ivestis, isvestis);
-        cout << ivestis << endl;
-        //debugHashas(ivestis, isvestis);
         cout << "Rezultatas: " << isvestis << endl;
     }
     
