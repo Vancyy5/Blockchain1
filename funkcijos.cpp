@@ -135,15 +135,21 @@ void hashas(const string &ivestis, string &isvestis)
 }
 uint32_t safeStringToUint32(const string& str,const string& seedui) 
 {
+    string truncated = str;
+    if (truncated.length() > 9) {
+
+        truncated = truncated.substr(0, 9);
+    }
+    
      uint32_t seed = 0;
-    for (unsigned char c : seedui) {
+    for (unsigned char c : seedui) 
+    {
         seed = seed * 31 + c; 
     }
-
     uint32_t hash = seed;
 
     
-    for (unsigned char c : str) 
+    for (unsigned char c : truncated) 
     {
         hash = hash * seed + c; 
     }
