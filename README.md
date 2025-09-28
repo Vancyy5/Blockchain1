@@ -165,7 +165,7 @@ Naudojamas failas avalanche_test_pairs.txt, kuriame yra 100 000 string porų, ku
 2. hex’ų lygmeniu.
 ir parodytos minimalios, maksimalios ir vidutines skirtingumo reikšmės.
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-09-23 183902.png>)
+![Nuotrauka](<nuotraukos/Screenshot 2025-09-23 183856.png>)
 
 __Rezultatas__: 
 Lavinos efektas yra stipresnis trumpesniuose duomenų blokuose.
