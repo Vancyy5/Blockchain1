@@ -36,7 +36,7 @@ Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių stri
 Žemiau pateikta lentelė su gautais duomenimis kiekvieno algoritmo
 
 | Algoritmas| ILGIS (10) | ILGIS (100) |ILGIS (500) |ILGIS (1000) |
-|-------------------------|-------------------------|-------------------------|-------------------------|
+|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
 | V0.1            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
 | V0.11            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
 | V0.2            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
