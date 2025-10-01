@@ -1,6 +1,6 @@
 # MANO HASH'AS
 
-Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. Ši versija yra v0.11, kurioje patobulinau savo sukurtą originalų hash generatorių, nežiūrint kaip veikia patikimi ir geri generatoriai.
+Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. Ši versija yra v0.2, kurioje patobulinau savo sukurtą originalų hash generatorių su dirbtinio intelekto pagalbą.
 
 ---
 # VEIKIMO APRAŠYMAS
@@ -12,56 +12,117 @@ function hashas(ivestis, isvestis)
     isvestis.clear()
     konvertuotasIvestis = convertLithuanianText(ivestis)
 
-    seedString = ""
-    seedui = ""
+    // Konstantos avalanche efektui
+    PRIME1 = 0x9E3779B185EBCA87
+    PRIME2 = 0xC2B2AE3D27D4EB4F
+    PRIME3 = 0x165667B19E3779F9
+    PRIME4 = 0x85EBCA77C2B2AE63
+    
+    // 512-bitų būsenos inicializacija
+    state[8] = {0, 0, 0, 0, 0, 0, 0, 0}
+    seed = PRIME1
     
     if konvertuotasIvestis is not empty
     {
-        // Kas 1000 simbolių ASCII suma
-        for kiekviena 1000 simbolių grupė in konvertuotasIvestis
-            suma = 0
-            for kiekvienas simbolis grupėje (iki 10 simbolių)
-                suma += ASCII vertė simbolio
-            seedString += suma kaip string
+        // Įvesties ilgio įtaka
+        seed ^= konvertuotasIvestis.size() * PRIME2
         
-        // Kas 20 simbolių '1' bitų kiekis
-        for kiekviena 20 simbolių grupė in konvertuotasIvestis
-            ones = 0
-            for kiekvienas simbolis grupėje
-                ones += '1' bitų skaičius simbolyje
-            seedString += ones kaip string
-            seedui += ones kaip string
+        // ASCII sumos su bit rotacija
+        for kiekvienas simbolis in konvertuotasIvestis
+            seed = rotateLeft(seed, 7) XOR (simbolis * PRIME3)
+        
+        // Pozicijos-priklausomas mixing
+        for kiekvienas simbolis in konvertuotasIvestis
+            stateIdx = pozicija % 8
+            state[stateIdx] ^= simbolis * (PRIME4 + pozicija)
+            state[stateIdx] = rotateLeft(state[stateIdx], 13)
     }
     else
-        seedString = "0"
+        seed = PRIME1
+        state[0] = PRIME2
 
+    // Avalanche mixing seed'ui
+    seed = avalancheMix(seed, PRIME2, PRIME3)
+    
+    rng = mt19937_64(seed)
+
+    // 4 mixing raundai
+    for round = 0 to 3
+        // State mixing su RNG
+        for i = 0 to 7
+            state[i] ^= rng()
+            state[i] = avalancheMix(state[i], PRIME2, PRIME3)
+        
+        // State'ų tarpusavio maišymas
+        for i = 0 to 7
+            next = (i + 1) % 8
+            prev = (i + 7) % 8
+            state[i] ^= rotateLeft(state[next], 17) XOR rotateLeft(state[prev], 31)
+
+    // Binary reprezentacija
     binaryInput = binary representation of konvertuotasIvestis
     
     if binaryInput is empty
         binaryInput = "10000000"
     
-    // Prailginimas iki 256 bitų su XOR
+    // Prailginimas iki 512 bitų su 3-way XOR
     originalBinary = binaryInput
-    while binaryInput.size() < 256
-        toAdd = originalBinary
-        for kiekvienas bitas in toAdd (kol nepasiekiame 256)
-            newBit = binaryInput[i % binaryInput.size()] XOR toAdd[i]
+    targetSize = 512
+    
+    while binaryInput.size() < targetSize
+        for kiekvienas bitas in originalBinary (kol nepasiekiame 512)
+            pos1 = i % binaryInput.size()
+            pos2 = (i * 7) % originalBinary.size()
+            pos3 = (i * 13) % binaryInput.size()
+            
+            bit1 = binaryInput[pos1]
+            bit2 = originalBinary[pos2]
+            bit3 = binaryInput[pos3]
+            
+            // Majority function
+            sum = bit1 + bit2 + bit3
+            newBit = (sum >= 2) ? '1' : '0'
             binaryInput += newBit
     
-    if binaryInput.size() > 256
-        binaryInput = first 256 bits
+    binaryInput = first 512 bits
 
-    mySeed = safeStringToUint32(seedString, seedui)
-    rng = mt19937(mySeed)
-
-    mixedBinary = ""
-    for kiekviena 32 bitų bloką in binaryInput
+    // Finalus mixing su 3-way XOR
+    finalBinary = ""
+    for kiekviena 64 bitų bloką in binaryInput
         randVal = rng()
+        stateVal = state[blokoNumeris % 8]
+        
         for kiekvienas bitas bloką
-            bit ^= atitinkamas randVal bitas
-            mixedBinary += bit
+            inputBit = bitas iš binaryInput
+            randBit = atitinkamas randVal bitas
+            stateBit = atitinkamas stateVal bitas
+            
+            finalBit = inputBit XOR randBit XOR stateBit
+            finalBinary += finalBit
 
-    isvestis = convert mixedBinary to HEX (po 4 bitus)
+    // Permutacija (Fisher-Yates shuffle)
+    permutation = [0, 1, 2, ..., 511]
+    shuffleRng = mt19937(seed XOR PRIME4)
+    
+    for i = 511 down to 1
+        j = shuffleRng() % (i + 1)
+        swap(permutation[i], permutation[j])
+    
+    scrambledBinary = ""
+    for i = 0 to 511
+        scrambledBinary += finalBinary[permutation[i]]
+
+    // Konversija į HEX (pirmi 256 bitai)
+    isvestis = convert first 256 bits of scrambledBinary to HEX (po 4 bitus)
+}
+
+function avalancheMix(h, PRIME2, PRIME3) {
+    h ^= h >> 33
+    h *= PRIME2
+    h ^= h >> 29
+    h *= PRIME3
+    h ^= h >> 32
+    return h
 }
 
 function safeStringToUint32(str, seedui) {
@@ -95,56 +156,118 @@ Funkcija priskiria lietuviškiems simboliams 16-bitų kodus. Tai leidžia konver
 
 ---
 
-## 3. Sėklos generavimas (seed)
+## 3. Kriptografinės konstantos ir būsenos inicializacija
 
-Hash funkcija generuoja atsitiktinių bitų generatoriaus sėklą pagal įvestį. Aš dariau taip iš įvesties:
+Hash funkcija naudoja 4 didelius pirminius skaičius (PRIME1-PRIME4), kurie užtikrina gerą bitų pasiskirstymą:
 
-- Susumuoja ASCII kodus kas 1000 simbolių.  
-- Suskaičiuoja „1“ bitų kiekį kas 20 simbolių.  
-- Rezultatai sudedami į seedString
-- Suskaičiuoti bitų kiekiai sudedami į seedui
-- Gautas skaičius naudojamas kaip sėkla atsitiktinių skaičių generatoriui.
-- Jeigu seed'as didesnis negu 9 simboliai, imami pirmi 9 simboliai.
+- PRIME1: Pradinis seed'as
+- PRIME2, PRIME3: Avalanche mixing'ui
+- PRIME4: Papildomam maišymui
 
-- Kiekvienas seedui simbolis pridedamas prie pradinio seed naudojant formulę:
+Sukuriama 512-bitų vidinė būsena (8 × 64-bitų skaičiai), kuri saugo tarpinę informaciją viso maišymo proceso metu
+
+---
+## 4. Sėklos generavimas (seed)
+
+Seed'as generuojamas iš įvesties charakteristikų:
+
+1. Ilgio įtaka: Įvesties ilgis dauginamas su PRIME2 ir XOR'inamas su seed'u.
+2. ASCII sumos su rotacija: Kiekvienas simbolis:
+
+- Dauginamas su PRIME3
+- XOR'inamas su seed'u
+- Seed'as pasukamas 7 bitais kairėn (bit rotation)
+
+
+3. Pozicijos-priklausomas mixing: Kiekvienas simbolis:
+
+- Dauginamas su (PRIME4 + pozicija)
+- XOR'inamas į atitinkamą state poziciją (pozicija % 8)
+- State elementas pasukamas 13 bitų kairėn
+
+---
+
+## 5. Avalanche efektas
+
+Avalanche mixing užtikrina, kad net mažas įvesties pokytis dramatiškai pakeičia išvestį:
 ```cpp 
-seed = seed * 31 + simbolio_kodas
+cppseed ^= seed >> 33    // Sklaido aukštus bitus
+seed *= PRIME2        // Maišo bitus tarpusavyje
+seed ^= seed >> 29    // Dar kartą sklaido
+seed *= PRIME3        // Galutinis maišymas
+seed ^= seed >> 32    // Finalizuoja
 ```
-- Taip gaunamas pradinės sėklos skaičius.
-- Galutinio hash’o skaičiavimas
-- Į hash priskiriamas seed.
-- Per kiekvieną truncated simbolį atliekama operacija:
-```cpp 
-hash = hash * seed + simbolio_kodas
+Šis procesas pritaikomas ir seed'ui, ir visiems state elementams.
+
+---
+
+## 6. State maišymo raundai
+
+Atliekami 4 maišymo raundai, kiekviename:
+
+1. RNG mixing: Kiekvienas state elementas:
+
+- XOR'inamas su 64-bitų atsitiktiniu skaičiumi iš RNG
+- Praeinamas per avalanche mixing
+
+
+2. State'ų tarpusavio maišymas: Kiekvienas state elementas:
+
+- XOR'inamas su kaimyniniais elementais
+- Kaimynai pasukti skirtingais kampais (17 ir 31 bitas)
+- Tai užtikrina informacijos sklaidą per visą state'ą
+
+---
+
+## 7. Binarinė reprezentacija ir prailginimas
+
+Įvestis paverčiama į binarinę seką. Jei tuščia, pridedamas bent 1 baitas (10000000).
+Prailginimas iki 512 bitų naudojant 3-way XOR su majority function:
+
+- Imami 3 bitai iš skirtingų pozicijų (naudojant skirtingus offset'us: 1, 7, 13)
+- Jei bent 2 iš 3 bitų yra '1' → naujas bitas '1'
+- Priešingu atveju → '0'
+
+Tai sukuria sudėtingesnį pattern'ą nei paprastas XOR.
+
+---
+
+## 8. Finalus maišymas (3-way XOR)
+
+Kiekvienam bitui atliekamas 3-way XOR:
+
+1. Bitas iš prailgintos įvesties
+2. Bitas iš RNG generuoto skaičiaus
+3. Bitas iš atitinkamo state elemento
+
+```cpp
+cppfinalBit = inputBit XOR randBit XOR stateBit
 ```
-- Tai sujungia abiejų eilučių informaciją.
+
+Tai sujungia visus tris informacijos šaltinius į vieną išvestį.
 
 ---
 
-## 4. Binarinė reprezentacija
+## 9. Permutacija (Fisher-Yates shuffle)
 
-Įvestis paverčiama į 256 bitų binarinę seką string `binaryInput`. Jei reikia, seka prailginama(kartojama) arba apkarpoma iki 256 bitų. Jei tuščia, pridedamas bent 1 baitas (10000000).
+Bitai permaišomi naudojant Fisher-Yates shuffle algoritmą:
 
----
+- Sukuriamas permutacijų masyvas [0, 1, 2, ..., 511]
+- Su deterministiniu RNG (seed XOR PRIME4) masyvas sumaišomas
+- Galutinė binarinė seka gaunama perrašant bitus pagal permutaciją
 
-## 5. XOR maišymas
-
-1. Imamas 32 bitų segmentas iš `binaryInput` sekos.
-2. Sugeneruojamas 32 bitų atsitiktinis skaičius iš RNG su suskaičiuotu seed'u.
-3. Kiekvienas įvesties bitas XOR’inamas su atitinkamu atsitiktiniu bitu:
-   - Jei bitai skirtingi → rezultatas 1
-   - Jei bitai vienodi → rezultatas 0
-4. Rezultatas įrašomas į `mixedBinary` seką.
-5. Jei likę mažiau nei 32 bitai, imami tiek, kiek yra.
+Tai prideda papildomą difuziją ir apsunkina pattern'ų atpažinimą.
 
 ---
 
-## 6. Konversija į HEX
+## 10. Konversija į HEX
 
-Maišyta binarinė seka konvertuojama į šešioliktainę (HEX) eilutę. Kiekvieni 4 binariniai bitai paverčiami į vieną HEX simbolį. Galutinis rezultatas yra unikalus hash kodas.
+Pirmi 256 bitai iš scrambled sekos konvertuojami į šešioliktainę (HEX) eilutę. Kiekvieni 4 binariniai bitai paverčiami į vieną HEX simbolį.
+
+Galutinis rezultatas: 64 HEX simboliai (256 bitų hash'as).
 
 ---
-# MANO HASH'O TESTAVIMAS
+# HASH'O TESTAVIMAS
 ---
 ## 1. Išvedimo dydys
 
@@ -153,13 +276,13 @@ Patikrinamas išvedimo dydis – nepriklausomai nuo įvedimo, rezultatas visada 
 Panaudojus šiuos failus gaunami hash'ai:
 
 1000 simbolių stringo failo large_1000.txt :
-5c2a864017f0d63becbc32d44b08edd9bee741cdc3d3ac563bb9affa00316e70
+cac03660e5c87882526702995179e353e7a9a48bbf26923020fc716f1255116b
 
 vieno simbolio failo single_a.txt  :
-6a9cf67dafcb0ac3b71126cc79622852c11cc9a450ab1aa8255d001e4e3c5673
+31a8c571ec101ff4023a9a56d6897a56311557cfe114833063d9597824651d71
 
 tuščio failo empty.txt  :
-807c5e20cc5074b68aa47c2723aeec22da9537120ddad98d02ed913263c3cdd8
+7757ea720541cf7f47f71f725ff68c28a8cab5130bd8709f1df7981d471d808d
 
 __Rezultatas__ : visada būna to pačio ilgio su visais failais (64 simbolių hex formatu).
 
@@ -169,7 +292,7 @@ __Rezultatas__ : visada būna to pačio ilgio su visais failais (64 simbolių he
 
 Patikrink deterministiškumą – tas pats failas duoda tą patį hash’ą,
 
-Paėmus failą single_a.txt visada išlieka tas pats hash'as :  6a9cf67dafcb0ac3b71126cc79622852c11cc9a450ab1aa8255d001e4e3c5673
+Paėmus failą single_a.txt visada išlieka tas pats hash'as :  31a8c571ec101ff4023a9a56d6897a56311557cfe114833063d9597824651d71
 
 __Rezultatas__: mano hash'as yra deterministinis. 
 
@@ -180,9 +303,9 @@ Išbandytas konstitucija.txt failas su 1, 2, 4, 8, 16, 32, 64 ir 128 eilutėmis.
 
 Žemiau pateikti grafikai su gautais vidurkiais 5 bandymų.
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 153334.png>)
+![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 163334.png>)
 
-![alt text](<nuotraukos/Screenshot 2025-10-01 153655.png>)
+![alt text](<nuotraukos/Screenshot 2025-10-01 163925.png>)
 
 __Rezultatas__: Tik kai pasiekia 128 eilučių, paryškėja užtruktas laikas.
 
@@ -193,7 +316,7 @@ Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių stri
 
 Žemiau pateikta nuotrauka su gautais rezultatais.
 
-![alt text](<nuotraukos/Screenshot 2025-10-01 152558.png>)
+![alt text](<nuotraukos/Screenshot 2025-10-01 163527.png>)
 
 __Rezultatas__: nerandamos jokios kolizijos iš visų 400 000 atsistiktinių string porų. 
 
@@ -207,28 +330,28 @@ Naudojamas failas avalanche_test_pairs.txt, kuriame yra 100 000 string porų, ku
 2. hex’ų lygmeniu.
 ir parodytos minimalios, maksimalios ir vidutines skirtingumo reikšmės.
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 154330.png>)
+![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 163624.png>)
 
 __Rezultatas__: 
-Bitų skirtumas ir hexų skirtumas 50, 100 ir 500 ilgio porose yra beveik vienodi (apie 42% bitų, apie 78% hexų).
+Bitų skirtumas ir hexų skirtumas 10, 50, 100 ir 500 ilgio porose yra beveik vienodi (apie 50% bitų, apie 93% hexų).
 
-Lavinos efektas išlieka panašus 50, 100 ir 500 ilgio porose.
+Lavinos efektas išlieka efetyvus visokiuose string'ų ilgių pororse ir užtvirtina, kad nėra kolizijų
 
 ---
 ## 5.  Negrįžtamumo demonstracija
 
 Žemiau parodytos nuotraukos, kaip hash'as dirba su HASH(imput + salt).
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 152736.png>)
+![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 163632.png>)
 
 Ir taip pat kaip reaguoja ieškomas hashas, prasidedantis iš tų pačių simbolių po 100 000 bandymų.
 
-![alt text](<nuotraukos/Screenshot 2025-10-01 152803.png>)
+![alt text](<nuotraukos/Screenshot 2025-10-01 163650.png>)
 
 __Rezultatas__: 
 Negalima žinant gautą hash'ą ir saltą atpažinti įvesties.
 
-Hash'as atsparus, kai programa bando atspėti (bruteforce) originalų tekstą pagal jo hash reikšmę.
+Hash'as neatsparus, kai programa bando atspėti (bruteforce) originalų tekstą pagal jo hash reikšmę.
 
 ---
 # IŠVADOS:
@@ -242,18 +365,31 @@ Aukštas kolizijų atsparumas
 
 Lietuviškų simbolių palaikymas 
 
-Geras Lavinos efektas. Bitų skirtumai svyruoja apie 41–50%, o hex skirtumai ~78–93%.
+Tobulas Lavinos efektas. Bitų skirtumai svyruoja apie 50%, o hex skirtumai apie 93%. 
+
+Nera kolizijų lavinos testavime.
 
 ---
 
 ## Trūkumai:
 
-Lavinos efekte vis tiek pasitaiko kolizijų 
-
-128 eilučių failas užtruko pastebimai ilgiau (neefektingas).
+Hash'as neatsparus bruteforc'ui.
 
 
 ---
-# PALYGINIMAS SU V0.1:
+# PALYGINIMAS SU V0.11 ir V0.1:
 ---
-V0.11 yra žymiai geresnė Lavinos efekto srityje, bet truputį letesnė apdorajant konstitucija.txt failo eilutes.
+V0.2 yra žymiai geresnė Lavinos efekto srityje, užtikrinant, kad nėra kolizijų.
+
+Hash'as nebelieka atsparus bruteforc'ui, kaip V0.11, ar V0.1.
+
+Laikas užtruktas kontitucijos.txt failo eilučių hash'inimui yra panašus kaip V0.1 su didesnio skaičiaus eilutėmis, bet V0.1 yra pastebimai greitesnis su mažiau skaičių eilučių.
+
+## Pagrindiniai skirtumai nuo senesnės versijos:
+- 512-bitų vidinė būsena vietoj tiesioginio seed'o generavimo
+- Avalanche efektas užtikrina geresnį bitų pasiskirstymą
+- 4 mixing raundai su state maišymu
+- 3-way XOR vietoj 2-way
+- Majority function prailginime
+- Fisher-Yates permutacija papildomam scrambling'ui
+- 64-bitų RNG (mt19937_64) vietoj 32-bitų

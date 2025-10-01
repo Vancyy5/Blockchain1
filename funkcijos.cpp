@@ -51,17 +51,6 @@ string convertLithuanianText(const string &input) {
     return result;
 }
 
-const uint64_t PRIME1 = 0x9E3779B185EBCA87ULL;
-const uint64_t PRIME2 = 0xC2B2AE3D27D4EB4FULL;
-const uint64_t PRIME3 = 0x165667B19E3779F9ULL;
-const uint64_t PRIME4 = 0x85EBCA77C2B2AE63ULL;
-
-// Geresnis bit mixing
-inline uint64_t rotateLeft(uint64_t x, int r) 
-{
-    return (x << r) | (x >> (64 - r));
-}
-
 void hashas(const string &ivestis, string &isvestis) 
 {
     isvestis.clear();
