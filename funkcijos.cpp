@@ -51,109 +51,185 @@ string convertLithuanianText(const string &input) {
     return result;
 }
 
+const uint64_t PRIME1 = 0x9E3779B185EBCA87ULL;
+const uint64_t PRIME2 = 0xC2B2AE3D27D4EB4FULL;
+const uint64_t PRIME3 = 0x165667B19E3779F9ULL;
+const uint64_t PRIME4 = 0x85EBCA77C2B2AE63ULL;
+
+// Geresnis bit mixing
+inline uint64_t rotateLeft(uint64_t x, int r) 
+{
+    return (x << r) | (x >> (64 - r));
+}
 
 void hashas(const string &ivestis, string &isvestis) 
 {
     isvestis.clear();
-
     string konvertuotasIvestis = convertLithuanianText(ivestis);
-
-    string seedString;
-    string seedui;
+    
+    // Konstantos
+    const uint64_t PRIME1 = 0x9E3779B185EBCA87ULL;
+    const uint64_t PRIME2 = 0xC2B2AE3D27D4EB4FULL;
+    const uint64_t PRIME3 = 0x165667B19E3779F9ULL;
+    const uint64_t PRIME4 = 0x85EBCA77C2B2AE63ULL;
+    
+    // Inicializuojame 512-bitų būseną (64 baitai)
+    vector<uint64_t> state(8, 0);
+    
+    // 1. Pirminis seed iš įvesties charakteristikų
+    uint64_t seed = PRIME1;
+    
     if (!konvertuotasIvestis.empty()) {
-        // kas 1000 simbolių ASCII suma
-        for (size_t i = 0; i < konvertuotasIvestis.size(); i += 1000) {
-            int suma = 0;
-            for (size_t j = i; j < i + 10 && j < konvertuotasIvestis.size(); j++) {
-                suma += static_cast<unsigned char>(konvertuotasIvestis[j]);
-            }
-            seedString += to_string(suma);
+        // Įvesties ilgio įtaka
+        seed ^= konvertuotasIvestis.size() * PRIME2;
+        
+        // ASCII sumos su rotacija
+        for (size_t i = 0; i < konvertuotasIvestis.size(); i++) {
+            unsigned char c = konvertuotasIvestis[i];
+            // Bit rotation inline
+            seed = ((seed << 7) | (seed >> (64 - 7))) ^ (c * PRIME3);
         }
-
-        // kas 20 simbolių '1' bitų kiekis
-        for (size_t i = 0; i < konvertuotasIvestis.size(); i += 20) {
-            int ones = 0;
-            for (size_t j = i; j < i + 20 && j < konvertuotasIvestis.size(); j++) {
-                bitset<8> bits(static_cast<unsigned char>(konvertuotasIvestis[j]));
-                ones += bits.count();
-            }
-            seedString += to_string(ones);
-            seedui+= to_string(ones);
+        
+        // Pozicijos-priklausomas mixing
+        for (size_t i = 0; i < konvertuotasIvestis.size(); i++) {
+            size_t stateIdx = i % 8;
+            state[stateIdx] ^= static_cast<uint64_t>(konvertuotasIvestis[i]) * (PRIME4 + i);
+            // Rotation inline
+            state[stateIdx] = (state[stateIdx] << 13) | (state[stateIdx] >> (64 - 13));
         }
     } else {
-        seedString = "0";
+        seed = PRIME1;
+        state[0] = PRIME2;
     }
-
-    // Įvesties binary kodas
+    
+    // 2. Avalanche mixing inline
+    seed ^= seed >> 33;
+    seed *= PRIME2;
+    seed ^= seed >> 29;
+    seed *= PRIME3;
+    seed ^= seed >> 32;
+    
+    // 3. Inicializuojame RNG su pagerintu seed'u
+    mt19937_64 rng(seed);
+    
+    // 4. Papildomas state mixing su RNG
+    for (int round = 0; round < 4; round++) {
+        for (size_t i = 0; i < 8; i++) {
+            state[i] ^= rng();
+            // Avalanche inline
+            uint64_t h = state[i];
+            h ^= h >> 33;
+            h *= PRIME2;
+            h ^= h >> 29;
+            h *= PRIME3;
+            h ^= h >> 32;
+            state[i] = h;
+        }
+        
+        // Sumaišome state'us tarpusavyje
+        for (size_t i = 0; i < 8; i++) {
+            size_t next = (i + 1) % 8;
+            size_t prev = (i + 7) % 8;
+            uint64_t rotNext = (state[next] << 17) | (state[next] >> (64 - 17));
+            uint64_t rotPrev = (state[prev] << 31) | (state[prev] >> (64 - 31));
+            state[i] ^= rotNext ^ rotPrev;
+        }
+    }
+    
+    // 5. Įvesties duomenų įterpimas į state
     string binaryInput;
     for (unsigned char c : konvertuotasIvestis) {
         binaryInput += bitset<8>(c).to_string();
     }
-
-    // jeigu tuščias, sukuriame bent 1 baitą (10000000)
+    
     if (binaryInput.empty()) {
         binaryInput = "10000000";
     }
-
-    // prailginam iki 256 bitų
+    
+    // 6. Pailginame įvestį su kompleksiniu algoritmu
     string originalBinary = binaryInput;
-    while (binaryInput.size() < 256) {
-        string toAdd = originalBinary;
-        // XOR su jau esančiais bitais
-        for (size_t i = 0; i < toAdd.size() && binaryInput.size() < 256; i++) {
-            char newBit = (binaryInput[i % binaryInput.size()] == toAdd[i]) ? '0' : '1';
+    size_t targetSize = 512;
+    
+    while (binaryInput.size() < targetSize) {
+        for (size_t i = 0; i < originalBinary.size() && binaryInput.size() < targetSize; i++) {
+            size_t pos1 = i % binaryInput.size();
+            size_t pos2 = (i * 7) % originalBinary.size();
+            size_t pos3 = (i * 13) % binaryInput.size();
+            
+            char bit1 = binaryInput[pos1];
+            char bit2 = originalBinary[pos2];
+            char bit3 = binaryInput[pos3];
+            
+            // 3-way XOR su majority function
+            int sum = (bit1 - '0') + (bit2 - '0') + (bit3 - '0');
+            char newBit = (sum >= 2) ? '1' : '0';
             binaryInput += newBit;
         }
     }
-    if (binaryInput.size() > 256) {
-        binaryInput = binaryInput.substr(0, 256);
-    }
-
-    uint32_t mySeed = safeStringToUint32(seedString, seedui);
-    mt19937 rng(mySeed);
-
-    // Maišymas
-    string mixedBinary;
-    for (size_t i = 0; i < binaryInput.size(); i += 32) {
-        uint32_t randVal = rng();
-        for (size_t j = 0; j < 32 && i + j < binaryInput.size(); j++) {
-            int bit = binaryInput[i + j] - '0';
-            int rbit = (randVal >> j) & 1;
-            bit ^= rbit;
-            mixedBinary.push_back(bit ? '1' : '0');
+    
+    binaryInput = binaryInput.substr(0, targetSize);
+    
+    // 7. Finalus mixing su RNG ir įvesties duomenimis
+    string finalBinary;
+    for (size_t i = 0; i < binaryInput.size(); i += 64) {
+        uint64_t randVal = rng();
+        uint64_t stateVal = state[(i / 64) % 8];
+        
+        for (size_t j = 0; j < 64 && i + j < binaryInput.size(); j++) {
+            int inputBit = binaryInput[i + j] - '0';
+            int randBit = (randVal >> j) & 1;
+            int stateBit = (stateVal >> j) & 1;
+            
+            // 3-way XOR
+            int finalBit = inputBit ^ randBit ^ stateBit;
+            finalBinary.push_back(finalBit ? '1' : '0');
         }
     }
-
-    // konversija į HEX
-    for (size_t i = 0; i + 4 <= mixedBinary.size(); i += 4) {
-        string nibble = mixedBinary.substr(i, 4);
+    
+    // 8. Papildomas scrambling pass
+    vector<int> permutation(finalBinary.size());
+    for (size_t i = 0; i < permutation.size(); i++) {
+        permutation[i] = i;
+    }
+    
+    // Fisher-Yates shuffle su deterministiniu RNG
+    mt19937 shuffleRng(seed ^ PRIME4);
+    for (int i = permutation.size() - 1; i > 0; i--) {
+        int j = shuffleRng() % (i + 1);
+        swap(permutation[i], permutation[j]);
+    }
+    
+    string scrambledBinary;
+    for (size_t i = 0; i < finalBinary.size(); i++) {
+        scrambledBinary.push_back(finalBinary[permutation[i]]);
+    }
+    
+    // 9. Konvertuojame į HEX (256 bitų = 64 hex simboliai)
+    for (size_t i = 0; i < 256; i += 4) {
+        string nibble = scrambledBinary.substr(i, 4);
         int value = stoi(nibble, nullptr, 2);
         stringstream ss;
         ss << hex << value;
         isvestis += ss.str();
     }
 }
-uint32_t safeStringToUint32(const string& str,const string& seedui) 
+
+uint32_t safeStringToUint32(const string& str, const string& seedui) 
 {
     string truncated = str;
     if (truncated.length() > 9) {
-
         truncated = truncated.substr(0, 9);
     }
     
-     uint32_t seed = 0;
-    for (unsigned char c : seedui) 
-    {
+    uint32_t seed = 0;
+    for (unsigned char c : seedui) {
         seed = seed * 31 + c; 
     }
-    uint32_t hash = seed;
-
     
-    for (unsigned char c : truncated) 
-    {
+    uint32_t hash = seed;
+    for (unsigned char c : truncated) {
         hash = hash * seed + c; 
     }
-
-    return hash;
     
+    return hash;
 }

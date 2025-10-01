@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <ctime>
 #include <charconv>
+#include <cstdint>
 #include <algorithm>
 #include <numeric>
 #ifdef _WIN32
