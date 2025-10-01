@@ -338,6 +338,6 @@ void hashas(const string &ivestis, string &isvestis)
     // Atkomentuokite, kurio norite:
     // md5Hash(konvertuotasIvestis, isvestis);
     // sha1Hash(konvertuotasIvestis, isvestis);
-    sha256Hash(konvertuotasIvestis, isvestis);  
+     sha256Hash(konvertuotasIvestis, isvestis);  
 }
 

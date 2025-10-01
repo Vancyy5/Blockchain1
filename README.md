@@ -1,395 +1,146 @@
-# MANO HASH'AS
+# STANDARTINIAI HASH
 
-Ši funkcija generuoja unikalų maišos (hash) kodą tekstams, kurie gali turėti lietuviškų simbolių. Ši versija yra v0.2, kurioje patobulinau savo sukurtą originalų hash generatorių su dirbtinio intelekto pagalbą.
-
----
-# VEIKIMO APRAŠYMAS
----
-## __Pseudo-kodu:__ 
-```cpp 
-function hashas(ivestis, isvestis) 
-{
-    isvestis.clear()
-    konvertuotasIvestis = convertLithuanianText(ivestis)
-
-    // Konstantos avalanche efektui
-    PRIME1 = 0x9E3779B185EBCA87
-    PRIME2 = 0xC2B2AE3D27D4EB4F
-    PRIME3 = 0x165667B19E3779F9
-    PRIME4 = 0x85EBCA77C2B2AE63
-    
-    // 512-bitų būsenos inicializacija
-    state[8] = {0, 0, 0, 0, 0, 0, 0, 0}
-    seed = PRIME1
-    
-    if konvertuotasIvestis is not empty
-    {
-        // Įvesties ilgio įtaka
-        seed ^= konvertuotasIvestis.size() * PRIME2
-        
-        // ASCII sumos su bit rotacija
-        for kiekvienas simbolis in konvertuotasIvestis
-            seed = rotateLeft(seed, 7) XOR (simbolis * PRIME3)
-        
-        // Pozicijos-priklausomas mixing
-        for kiekvienas simbolis in konvertuotasIvestis
-            stateIdx = pozicija % 8
-            state[stateIdx] ^= simbolis * (PRIME4 + pozicija)
-            state[stateIdx] = rotateLeft(state[stateIdx], 13)
-    }
-    else
-        seed = PRIME1
-        state[0] = PRIME2
-
-    // Avalanche mixing seed'ui
-    seed = avalancheMix(seed, PRIME2, PRIME3)
-    
-    rng = mt19937_64(seed)
-
-    // 4 mixing raundai
-    for round = 0 to 3
-        // State mixing su RNG
-        for i = 0 to 7
-            state[i] ^= rng()
-            state[i] = avalancheMix(state[i], PRIME2, PRIME3)
-        
-        // State'ų tarpusavio maišymas
-        for i = 0 to 7
-            next = (i + 1) % 8
-            prev = (i + 7) % 8
-            state[i] ^= rotateLeft(state[next], 17) XOR rotateLeft(state[prev], 31)
-
-    // Binary reprezentacija
-    binaryInput = binary representation of konvertuotasIvestis
-    
-    if binaryInput is empty
-        binaryInput = "10000000"
-    
-    // Prailginimas iki 512 bitų su 3-way XOR
-    originalBinary = binaryInput
-    targetSize = 512
-    
-    while binaryInput.size() < targetSize
-        for kiekvienas bitas in originalBinary (kol nepasiekiame 512)
-            pos1 = i % binaryInput.size()
-            pos2 = (i * 7) % originalBinary.size()
-            pos3 = (i * 13) % binaryInput.size()
-            
-            bit1 = binaryInput[pos1]
-            bit2 = originalBinary[pos2]
-            bit3 = binaryInput[pos3]
-            
-            // Majority function
-            sum = bit1 + bit2 + bit3
-            newBit = (sum >= 2) ? '1' : '0'
-            binaryInput += newBit
-    
-    binaryInput = first 512 bits
-
-    // Finalus mixing su 3-way XOR
-    finalBinary = ""
-    for kiekviena 64 bitų bloką in binaryInput
-        randVal = rng()
-        stateVal = state[blokoNumeris % 8]
-        
-        for kiekvienas bitas bloką
-            inputBit = bitas iš binaryInput
-            randBit = atitinkamas randVal bitas
-            stateBit = atitinkamas stateVal bitas
-            
-            finalBit = inputBit XOR randBit XOR stateBit
-            finalBinary += finalBit
-
-    // Permutacija (Fisher-Yates shuffle)
-    permutation = [0, 1, 2, ..., 511]
-    shuffleRng = mt19937(seed XOR PRIME4)
-    
-    for i = 511 down to 1
-        j = shuffleRng() % (i + 1)
-        swap(permutation[i], permutation[j])
-    
-    scrambledBinary = ""
-    for i = 0 to 511
-        scrambledBinary += finalBinary[permutation[i]]
-
-    // Konversija į HEX (pirmi 256 bitai)
-    isvestis = convert first 256 bits of scrambledBinary to HEX (po 4 bitus)
-}
-
-function avalancheMix(h, PRIME2, PRIME3) {
-    h ^= h >> 33
-    h *= PRIME2
-    h ^= h >> 29
-    h *= PRIME3
-    h ^= h >> 32
-    return h
-}
-
-function safeStringToUint32(str, seedui) {
-    truncated = str
-    if truncated.length > 9
-        truncated = first 9 characters of str
-    
-    seed = 0
-    for kiekvienas simbolis in seedui
-        seed = seed * 31 + ASCII vertė simbolio
-    
-    hash = seed
-    
-    for kiekvienas simbolis in truncated
-        hash = hash * seed + ASCII vertė simbolio
-    
-    return hash
-}
-```
-## __Žodžiais:__
-
-## 1. Lietuviškų simbolių žemėlapis
-
-Funkcija priskiria lietuviškiems simboliams 16-bitų kodus. Tai leidžia konvertuoti simbolius į nuoseklią baitų seką prieš maišos generavimą.
+Ši versija yra v0.2palyginimas, kurioje panaudoju standartinius hash'us MD5, SHA-1, SHA-256 palyginimui su savo sukurtomis hash'o versijomis v0.1, v0.11 ir v0.2.  
 
 ---
-
-## 2. Teksto konvertavimas
-
-Įvestas tekstas yra konvertuojamas taip, kad įprasti simboliai lieka UTF-8 formatu, o lietuviški simboliai paverčiami į 16-bitų baitus pagal žemėlapį. Taip gaunama nuosekli baitų seka, paruošta maišai.
-
+# HASH'Ų LYGINIMAI
 ---
-
-## 3. Kriptografinės konstantos ir būsenos inicializacija
-
-Hash funkcija naudoja 4 didelius pirminius skaičius (PRIME1-PRIME4), kurie užtikrina gerą bitų pasiskirstymą:
-
-- PRIME1: Pradinis seed'as
-- PRIME2, PRIME3: Avalanche mixing'ui
-- PRIME4: Papildomam maišymui
-
-Sukuriama 512-bitų vidinė būsena (8 × 64-bitų skaičiai), kuri saugo tarpinę informaciją viso maišymo proceso metu
-
----
-## 4. Sėklos generavimas (seed)
-
-Seed'as generuojamas iš įvesties charakteristikų:
-
-1. Ilgio įtaka: Įvesties ilgis dauginamas su PRIME2 ir XOR'inamas su seed'u.
-2. ASCII sumos su rotacija: Kiekvienas simbolis:
-
-- Dauginamas su PRIME3
-- XOR'inamas su seed'u
-- Seed'as pasukamas 7 bitais kairėn (bit rotation)
-
-
-3. Pozicijos-priklausomas mixing: Kiekvienas simbolis:
-
-- Dauginamas su (PRIME4 + pozicija)
-- XOR'inamas į atitinkamą state poziciją (pozicija % 8)
-- State elementas pasukamas 13 bitų kairėn
-
----
-
-## 5. Avalanche efektas
-
-Avalanche mixing užtikrina, kad net mažas įvesties pokytis dramatiškai pakeičia išvestį:
-```cpp 
-cppseed ^= seed >> 33    // Sklaido aukštus bitus
-seed *= PRIME2        // Maišo bitus tarpusavyje
-seed ^= seed >> 29    // Dar kartą sklaido
-seed *= PRIME3        // Galutinis maišymas
-seed ^= seed >> 32    // Finalizuoja
-```
-Šis procesas pritaikomas ir seed'ui, ir visiems state elementams.
-
----
-
-## 6. State maišymo raundai
-
-Atliekami 4 maišymo raundai, kiekviename:
-
-1. RNG mixing: Kiekvienas state elementas:
-
-- XOR'inamas su 64-bitų atsitiktiniu skaičiumi iš RNG
-- Praeinamas per avalanche mixing
-
-
-2. State'ų tarpusavio maišymas: Kiekvienas state elementas:
-
-- XOR'inamas su kaimyniniais elementais
-- Kaimynai pasukti skirtingais kampais (17 ir 31 bitas)
-- Tai užtikrina informacijos sklaidą per visą state'ą
-
----
-
-## 7. Binarinė reprezentacija ir prailginimas
-
-Įvestis paverčiama į binarinę seką. Jei tuščia, pridedamas bent 1 baitas (10000000).
-Prailginimas iki 512 bitų naudojant 3-way XOR su majority function:
-
-- Imami 3 bitai iš skirtingų pozicijų (naudojant skirtingus offset'us: 1, 7, 13)
-- Jei bent 2 iš 3 bitų yra '1' → naujas bitas '1'
-- Priešingu atveju → '0'
-
-Tai sukuria sudėtingesnį pattern'ą nei paprastas XOR.
-
----
-
-## 8. Finalus maišymas (3-way XOR)
-
-Kiekvienam bitui atliekamas 3-way XOR:
-
-1. Bitas iš prailgintos įvesties
-2. Bitas iš RNG generuoto skaičiaus
-3. Bitas iš atitinkamo state elemento
-
-```cpp
-cppfinalBit = inputBit XOR randBit XOR stateBit
-```
-
-Tai sujungia visus tris informacijos šaltinius į vieną išvestį.
-
----
-
-## 9. Permutacija (Fisher-Yates shuffle)
-
-Bitai permaišomi naudojant Fisher-Yates shuffle algoritmą:
-
-- Sukuriamas permutacijų masyvas [0, 1, 2, ..., 511]
-- Su deterministiniu RNG (seed XOR PRIME4) masyvas sumaišomas
-- Galutinė binarinė seka gaunama perrašant bitus pagal permutaciją
-
-Tai prideda papildomą difuziją ir apsunkina pattern'ų atpažinimą.
-
----
-
-## 10. Konversija į HEX
-
-Pirmi 256 bitai iš scrambled sekos konvertuojami į šešioliktainę (HEX) eilutę. Kiekvieni 4 binariniai bitai paverčiami į vieną HEX simbolį.
-
-Galutinis rezultatas: 64 HEX simboliai (256 bitų hash'as).
-
----
-# HASH'O TESTAVIMAS
----
-## 1. Išvedimo dydys
-
-Patikrinamas išvedimo dydis – nepriklausomai nuo įvedimo, rezultatas visada tokio pat ilgio.
-
-Panaudojus šiuos failus gaunami hash'ai:
-
-1000 simbolių stringo failo large_1000.txt :
-cac03660e5c87882526702995179e353e7a9a48bbf26923020fc716f1255116b
-
-vieno simbolio failo single_a.txt  :
-31a8c571ec101ff4023a9a56d6897a56311557cfe114833063d9597824651d71
-
-tuščio failo empty.txt  :
-7757ea720541cf7f47f71f725ff68c28a8cab5130bd8709f1df7981d471d808d
-
-__Rezultatas__ : visada būna to pačio ilgio su visais failais (64 simbolių hex formatu).
-
-
----
-## 2. Deterministiškumas
-
-Patikrink deterministiškumą – tas pats failas duoda tą patį hash’ą,
-
-Paėmus failą single_a.txt visada išlieka tas pats hash'as :  31a8c571ec101ff4023a9a56d6897a56311557cfe114833063d9597824651d71
-
-__Rezultatas__: mano hash'as yra deterministinis. 
-
----
-## 3. Efektyvumas
+## 1. Efektyvumas
 
 Išbandytas konstitucija.txt failas su 1, 2, 4, 8, 16, 32, 64 ir 128 eilutėmis.
 
-Žemiau pateikti grafikai su gautais vidurkiais 5 bandymų.
+Žemiau pateikta lentelė su gautais duomenimis su kiekvienu algoritmu paėmus vidurkį iš 5 bandymų
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 163334.png>)
+| Algoritmas| ILGIS (1) | ILGIS (2) |ILGIS (4) |ILGIS (8) | ILGIS (16) | ILGIS (32) | ILGIS (64) | ILGIS (128) |
+|-------------------------|-------------------------|-------------------------|
+| V0.1|0.000095s| 0.000070s |0.000103s| 0.000108s | 0.000227s |  0.000486s | 0.000778s |0.002142s |
+| V0.11|0.000194s| 0.000189s |0.000227s| 0.000340s | 0.000705s| 0.000855 |  0.000986s | 0.004040s | 
+| V0.2|0.000269s| 0.000238s |0.000269s| 0.000298s |  0.000446s |  0.000688s | 0.001434s |0.002686s |
+| MD5|0.000053s| 0.000049s |0.000041s| 0.000101s | 0.000220s |  0.000241s | 0.000709s |0.001232s |
+| SHA-1| 0.000288s| 0.000130s |0.000111s | 0.000167s | 0.000244s |  0.000416s | 0.000792s |0.001775s |
+| SHA-256| 0.000060s| 0.000157s |0.000085s | 0.000173s |  0.000287s |  0.000634s | 0.001193s |0.002690s |
 
-![alt text](<nuotraukos/Screenshot 2025-10-01 163925.png>)
+__Rezultatas__: 
 
-__Rezultatas__: Tik kai pasiekia 128 eilučių, paryškėja užtruktas laikas.
+- Visuose algoritmuose matomas laiko augimas didėjant failo ilgiui.
+
+- Iki ~32–64 eilučių skirtumai nėra labai ryškūs. Tik prie 128 eilučių akivaizdžiai paryškėja užtruktas laikas.
+
+- Greičiausi algoritmai mažiems failams: MD5, V0.1, SHA-256. Lėčiausi – V0.11 ir V0.2.
 
 ---
-## 4. Kolizijų paieška
+## 2. Kolizijų paieška
 
 Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių string porų, kurių ilgis yra: 10, 100, 500, 1000 simbolių.
 
-Žemiau pateikta nuotrauka su gautais rezultatais.
+Žemiau pateikta lentelė su gautais duomenimis kiekvieno algoritmo
 
-![alt text](<nuotraukos/Screenshot 2025-10-01 163527.png>)
+| Algoritmas| ILGIS (10) | ILGIS (100) |ILGIS (500) |ILGIS (1000) |
+|-------------------------|-------------------------|-------------------------|
+| V0.1            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
+| V0.11            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
+| V0.2            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
+| MD5           | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
+| SHA-1           | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
+| SHA-256          | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
 
-__Rezultatas__: nerandamos jokios kolizijos iš visų 400 000 atsistiktinių string porų. 
+__Rezultatas__: Nei viename algoritme kolizijų neaptikta, net didesniems stringams.
 
 ---
-## 5. Lavinos efektas
+## 3. Lavinos efektas
 
 Naudojamas failas avalanche_test_pairs.txt, kuriame yra 100 000 string porų, kurių ilgiai yra 10, 50, 100, 500 ir skiriasi atsitiktiniu vienu simboliu tarpusavyje.
 
 Žemiau pateikta nuotrauka, kurioje suskaičiuota, kiek procentų skiriasi gautieji porų hash'ai:
 1. bit'ų lygmeniu,
 2. hex’ų lygmeniu.
-ir parodytos minimalios, maksimalios ir vidutines skirtingumo reikšmės.
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 163624.png>)
+ Lentelėje surašomi kiekvieno algoritmo rezultatai su 500 ilgio stringo porom.
+
+| Algoritmas| Hex lygmuo (vidurkis) | Bit lygmuo (vidurkis) |
+|-------------------------|-------------------------|-------------------------|
+| V0.1  | 26,01%         | 13,85%         |
+| V0.11    |  78,24%         | 41,69%         |
+| V0.2             |  93,75%         | 49,97%         |
+| MD5            | 93,76%         | 50,03%         |
+| SHA-1           |  93,75%         | 50,03%         |
+| SHA-256          |  93.74%         | 50.01%         |
 
 __Rezultatas__: 
-Bitų skirtumas ir hexų skirtumas 10, 50, 100 ir 500 ilgio porose yra beveik vienodi (apie 50% bitų, apie 93% hexų).
+- Bitų ir hex’ų skirtumai tarp panašių stringų siekia ~50% ir ~93% – Lavinos efektas veikia efektyviai.
 
-Lavinos efektas išlieka efetyvus visokiuose string'ų ilgių pororse ir užtvirtina, kad nėra kolizijų
+- V0.2, MD5, SHA-1, SHA-256 parodo optimalų lavinos efektą.
+
+- V0.1 silpniau reaguoja į minimalų įvesties pakeitimą.
 
 ---
-## 5.  Negrįžtamumo demonstracija
+## 4.  Negrįžtamumo demonstracija
 
 Žemiau parodytos nuotraukos, kaip hash'as dirba su HASH(imput + salt).
 
-![Nuotrauka](<nuotraukos/Screenshot 2025-10-01 163632.png>)
+Lyginimui naudojau Žinutė: "Slapta žinutė" su salt: "salt123".
+
+Lentelėje parodyta, kaip visi algoritmai užhashino.
+
+| Algoritmas| HASH|
+|-------------------------|-------------------------|-------------------------|
+| V0.1  |  e0270a1f456a7e72009209eaf83829a968d2675e4496d5b084731b9fcc4c4252     |
+| V0.11    |    50f61203318ab90c0171710469494fd75c57fd77e413501199ade8790ab891ed       |
+| V0.2             |   874dd59867950c6c3e42a448c5e8a2c22051bf41eb6aa11217b858ee5b2700f1     |
+| MD5            | 40120409984f74fcc9f076026d1305ec |
+| SHA-1           |  fee620d72a3b8704b90d7625fe70d5d9a5822eff  |
+| SHA-256          |   55fbd3ccc44f2cd2a3f7fc72ce523ba828ff760199dcf49d089913fdca0f5ec5         |
 
 Ir taip pat kaip reaguoja ieškomas hashas, prasidedantis iš tų pačių simbolių po 100 000 bandymų.
 
-![alt text](<nuotraukos/Screenshot 2025-10-01 163650.png>)
+Naudojamas hash'as, kuris prasideda '0000'
+
+Lentelėje parodoma, ar surastas toks hash'as ir kiek laiko užtruko ir bandymų. Jeigu nesurastas lentelėje yra '-'.
+
+| Algoritmas| Bandymai | Laikas (s) |
+|-------------------------|-------------------------|-------------------------|
+| V0.1  | -           | -         |
+| V0.11    | -           | -         |
+| V0.2             | 82652            | 6.3s          |
+| MD5            | 16967          | 0.1544s         |
+| SHA-1           | 2887         | 0.0259s         |
+| SHA-256          | 59656           | 0.5560s          |
 
 __Rezultatas__: 
-Negalima žinant gautą hash'ą ir saltą atpažinti įvesties.
+- Negalima žinant gautą hash'ą ir saltą atpažinti įvesties visuose algoritmuose.
 
-Hash'as neatsparus, kai programa bando atspėti (bruteforce) originalų tekstą pagal jo hash reikšmę.
+- Bruteforce atskleidžia, kad MD5 ir SHA-1 yra palyginti greiti atspėjimui mažų prefiksų (0000) atveju, V0.2 ir SHA-256 – lėtesni.
+
+- Tai parodo, kad algoritmai yra saugūs, bet ne visi vienodai atsparūs bruteforce
 
 ---
 # IŠVADOS:
----
-## Stiprybės:
-Pastovi išvestis - visada 256 bitų
 
-Deterministinė - patikimai veikia
+## 1. Greitis:
 
-Aukštas kolizijų atsparumas 
+Mažiems failams greičiausi: MD5, V0.1, SHA-256.
 
-Lietuviškų simbolių palaikymas 
+Didėjant failo dydžiui, skirtumas tarp algoritmų ryškėja, V0.11 yra lėčiausias.
 
-Tobulas Lavinos efektas. Bitų skirtumai svyruoja apie 50%, o hex skirtumai apie 93%. 
+## 2. Kolizijos:
 
-Nera kolizijų lavinos testavime.
+Nei vienas algoritmas neparodė kolizijų 100 000 porų testuose, t.y., visi algoritmai yra kolizijų atžvilgiu patikimi.
 
----
+## 3. Lavinos efektas:
 
-## Trūkumai:
+V0.2, MD5, SHA-1 ir SHA-256 demonstruoja stiprų lavinos efektą (~50% bitų, ~93% hex’ų), užtikrinantį gerą atsitiktinumo pasiskirstymą.
 
-Hash'as neatsparus bruteforc'ui.
+V0.1 lavinos efektas silpnesnis.
 
+## 4. Negrįžtamumas:
 
----
-# PALYGINIMAS SU V0.11 ir V0.1:
----
-V0.2 yra žymiai geresnė Lavinos efekto srityje, užtikrinant, kad nėra kolizijų.
+Visi algoritmai užtikrina, kad originalios žinutės neįmanoma atkurti iš hash'o ir salto.
 
-Hash'as nebelieka atsparus bruteforc'ui, kaip V0.11, ar V0.1.
+Bruteforce bandymai rodo, kad paprasti prefiksai gali būti atspėti, bet tai priklauso nuo algoritmo greičio.
 
-Laikas užtruktas kontitucijos.txt failo eilučių hash'inimui yra panašus kaip V0.1 su didesnio skaičiaus eilutėmis, bet V0.1 yra pastebimai greitesnis su mažiau skaičių eilučių.
+## Rekomendacijos:
 
-## Pagrindiniai skirtumai nuo senesnės versijos:
-- 512-bitų vidinė būsena vietoj tiesioginio seed'o generavimo
-- Avalanche efektas užtikrina geresnį bitų pasiskirstymą
-- 4 mixing raundai su state maišymu
-- 3-way XOR vietoj 2-way
-- Majority function prailginime
-- Fisher-Yates permutacija papildomam scrambling'ui
-- 64-bitų RNG (mt19937_64) vietoj 32-bitų
+Jei svarbus greitis: naudoti MD5 arba V0.1 (tik mažesniems failams).
+
+Jei svarbiausia saugumas ir lavinos efektas: rekomenduojami V0.2, SHA-1 ar SHA-256.
+
