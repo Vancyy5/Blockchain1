@@ -12,7 +12,7 @@ Išbandytas konstitucija.txt failas su 1, 2, 4, 8, 16, 32, 64 ir 128 eilutėmis.
 Žemiau pateikta lentelė su gautais duomenimis su kiekvienu algoritmu paėmus vidurkį iš 5 bandymų
 
 | Algoritmas| ILGIS (1) | ILGIS (2) |ILGIS (4) |ILGIS (8) | ILGIS (16) | ILGIS (32) | ILGIS (64) | ILGIS (128) |
-|-------------------------|-------------------------|-------------------------|
+|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
 | V0.1|0.000095s| 0.000070s |0.000103s| 0.000108s | 0.000227s |  0.000486s | 0.000778s |0.002142s |
 | V0.11|0.000194s| 0.000189s |0.000227s| 0.000340s | 0.000705s| 0.000855 |  0.000986s | 0.004040s | 
 | V0.2|0.000269s| 0.000238s |0.000269s| 0.000298s |  0.000446s |  0.000688s | 0.001434s |0.002686s |
@@ -36,7 +36,7 @@ Naudojamas failas collision_pairs.txt, kuriame yra po 100 000 atsitiktinių stri
 Žemiau pateikta lentelė su gautais duomenimis kiekvieno algoritmo
 
 | Algoritmas| ILGIS (10) | ILGIS (100) |ILGIS (500) |ILGIS (1000) |
-|-------------------------|-------------------------|-------------------------|
+|-------------------------|-------------------------|-------------------------|-------------------------|
 | V0.1            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
 | V0.11            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
 | V0.2            | 0 kolizijų            | 0 kolizijų           |0 kolizijų  | 0 kolizijų  |
@@ -83,7 +83,7 @@ Lyginimui naudojau Žinutė: "Slapta žinutė" su salt: "salt123".
 Lentelėje parodyta, kaip visi algoritmai užhashino.
 
 | Algoritmas| HASH|
-|-------------------------|-------------------------|-------------------------|
+|-------------------------|-------------------------|
 | V0.1  |  e0270a1f456a7e72009209eaf83829a968d2675e4496d5b084731b9fcc4c4252     |
 | V0.11    |    50f61203318ab90c0171710469494fd75c57fd77e413501199ade8790ab891ed       |
 | V0.2             |   874dd59867950c6c3e42a448c5e8a2c22051bf41eb6aa11217b858ee5b2700f1     |
