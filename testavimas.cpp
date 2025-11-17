@@ -235,8 +235,9 @@ double calculateBitDifference(const string& hash1, const string& hash2) {
             val1 = hash1[i] - '0';
         } else if (hash1[i] >= 'a' && hash1[i] <= 'f') {
             val1 = hash1[i] - 'a' + 10;
-        }
-         else {
+        } else if (hash1[i] >= 'A' && hash1[i] <= 'F') { 
+            val1 = hash1[i] - 'A' + 10;
+        } else {
             cout << "KLAIDA: Netinkamas hex simbolis: " << hash1[i] << endl;
             continue;
         }
@@ -245,6 +246,8 @@ double calculateBitDifference(const string& hash1, const string& hash2) {
             val2 = hash2[i] - '0';
         } else if (hash2[i] >= 'a' && hash2[i] <= 'f') {
             val2 = hash2[i] - 'a' + 10;
+        } else if (hash2[i] >= 'A' && hash2[i] <= 'F') { 
+            val2 = hash2[i] - 'A' + 10;
         } else {
             cout << "KLAIDA: Netinkamas hex simbolis: " << hash2[i] << endl;
             continue;

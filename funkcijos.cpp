@@ -3,8 +3,8 @@
 map<wchar_t, uint16_t> getLithuanianCharMap() 
 {
     map<wchar_t, uint16_t> charMap;
-
-   
+    
+    // Mažosios raidės
     charMap[L'ą'] = 0xC485;  
     charMap[L'č'] = 0xC48D;  
     charMap[L'ę'] = 0xC499;  
@@ -15,7 +15,7 @@ map<wchar_t, uint16_t> getLithuanianCharMap()
     charMap[L'ū'] = 0xC5AB;  
     charMap[L'ž'] = 0xC5BE;  
 
-    
+    // Didžiosios raidės
     charMap[L'Ą'] = 0xC484;  
     charMap[L'Č'] = 0xC48C;  
     charMap[L'Ę'] = 0xC498;  
@@ -51,293 +51,277 @@ string convertLithuanianText(const string &input) {
     return result;
 }
 
-// ===== MD5 Implementation =====
+// Iš Nedos - base62 konvertavimas
+const char BASE62[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-inline uint32_t md5_F(uint32_t x, uint32_t y, uint32_t z) { return (x & y) | (~x & z); }
-inline uint32_t md5_G(uint32_t x, uint32_t y, uint32_t z) { return (x & z) | (y & ~z); }
-inline uint32_t md5_H(uint32_t x, uint32_t y, uint32_t z) { return x ^ y ^ z; }
-inline uint32_t md5_I(uint32_t x, uint32_t y, uint32_t z) { return y ^ (x | ~z); }
-inline uint32_t md5_rotateLeft(uint32_t x, uint32_t n) { return (x << n) | (x >> (32 - n)); }
+inline char to_base62(int sk) {
+    sk %= 62;
+    if (sk < 0) sk += 62;
+    return BASE62[sk];
+}
 
-void md5Hash(const string &input, string &output) {
-    output.clear();
+// Iš Tėjos - bit rotacijos funkcijos
+uint64_t rotateLeft(uint64_t value, int shift) {
+    return (value << shift) | (value >> (64 - shift));
+}
+
+uint64_t rotateRight(uint64_t value, int shift) {
+    return (value >> shift) | (value << (64 - shift));
+}
+
+// Iš Gustavo - binary konversijos
+string wordToBinary(const string& text) {
+    string binary;
+    for (unsigned char c : text) {
+        binary += bitset<8>(c).to_string();
+    }
+    return binary;
+}
+
+string binaryToHex(const string& binary) {
+    string hex;
+    for (size_t i = 0; i + 4 <= binary.size(); i += 4) {
+        int value = stoi(binary.substr(i, 4), nullptr, 2);
+        stringstream ss;
+        ss << std::hex << value;
+        hex += ss.str();
+    }
+    return hex;
+}
+
+string hashas(const string& input) 
+{
+    // Konvertuojame lietuviškus simbolius
+    string konvertuotasInput = convertLithuanianText(input);
     
-    // MD5 constants
-    static const uint32_t s[64] = {
-        7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
-        5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20,
-        4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
-        6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+    // 1. INICIALIZACIJA - iš Tėjos ir Juliaus
+    // Tėjos konstantos
+    const uint64_t INIT_A = 0x428a2f98d728ae22ULL;
+    const uint64_t INIT_B = 0x7137449123ef65cdULL;
+    const uint64_t INIT_C = 0xb5c0fbcfec4d3b2fULL;
+    const uint64_t INIT_D = 0xe9b5dba58189dbbcULL;
+    
+    // Juliaus seed'as
+    array<uint64_t, 8> seed = {
+        0x5FAF3C1BULL, 0x6E8D3B27ULL, 0xA1C5E97FULL, 0x4B7D2E95ULL,
+        0xF2A39C68ULL, 0x3E9B5A7CULL, 0x9D74C5A1ULL, 0x7C1A5F3EULL
     };
     
-    static const uint32_t K[64] = {
-        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
-        0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
-        0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
-        0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
-        0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
-        0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
-        0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
-        0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
-    };
+    uint64_t h1 = INIT_A, h2 = INIT_B, h3 = INIT_C, h4 = INIT_D;
     
-    // Initialize hash values
-    uint32_t a0 = 0x67452301;
-    uint32_t b0 = 0xefcdab89;
-    uint32_t c0 = 0x98badcfe;
-    uint32_t d0 = 0x10325476;
+    // 2. MIGLĖS - Bubble sort maisymas su hash'u
+    vector<char> sortedInput(konvertuotasInput.begin(), konvertuotasInput.end());
+    int n = sortedInput.size();
     
-    // Pre-processing
-    string msg = input;
-    uint64_t msgLen = msg.length() * 8;
-    msg += (char)0x80;
-    
-    while ((msg.length() % 64) != 56) {
-        msg += (char)0x00;
-    }
-    
-    // Append length
-    for (int i = 0; i < 8; i++) {
-        msg += (char)((msgLen >> (i * 8)) & 0xFF);
-    }
-    
-    // Process message in 512-bit chunks
-    for (size_t offset = 0; offset < msg.length(); offset += 64) {
-        uint32_t M[16];
-        for (int i = 0; i < 16; i++) {
-            M[i] = ((uint32_t)(unsigned char)msg[offset + i * 4 + 0]) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 1] << 8) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 2] << 16) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 3] << 24);
-        }
-        
-        uint32_t A = a0, B = b0, C = c0, D = d0;
-        
-        for (int i = 0; i < 64; i++) {
-            uint32_t F, g;
-            if (i < 16) {
-                F = md5_F(B, C, D);
-                g = i;
-            } else if (i < 32) {
-                F = md5_G(B, C, D);
-                g = (5 * i + 1) % 16;
-            } else if (i < 48) {
-                F = md5_H(B, C, D);
-                g = (3 * i + 5) % 16;
-            } else {
-                F = md5_I(B, C, D);
-                g = (7 * i) % 16;
+    for (int i = 0; i < min(n - 1, 100); ++i) { 
+        for (int j = 0; j < n - 1 - i; ++j) {
+            if (sortedInput[j] > sortedInput[j+1]) {
+                unsigned int a = (unsigned char)sortedInput[j];
+                unsigned int b = (unsigned char)sortedInput[j+1];
+                
+                int idx = j % 8;
+                seed[idx] = (seed[idx] << 5) + (seed[idx] >> 3) + (a * 17 + b * 31 + j * 13);
+                
+                swap(sortedInput[j], sortedInput[j+1]);
             }
-            
-            F = F + A + K[i] + M[g];
-            A = D;
-            D = C;
-            C = B;
-            B = B + md5_rotateLeft(F, s[i]);
         }
-        
-        a0 += A;
-        b0 += B;
-        c0 += C;
-        d0 += D;
     }
     
-    // Produce final hash
-    stringstream ss;
-    ss << hex << setfill('0');
-    ss << setw(2) << ((a0 >> 0) & 0xFF) << setw(2) << ((a0 >> 8) & 0xFF) 
-       << setw(2) << ((a0 >> 16) & 0xFF) << setw(2) << ((a0 >> 24) & 0xFF);
-    ss << setw(2) << ((b0 >> 0) & 0xFF) << setw(2) << ((b0 >> 8) & 0xFF) 
-       << setw(2) << ((b0 >> 16) & 0xFF) << setw(2) << ((b0 >> 24) & 0xFF);
-    ss << setw(2) << ((c0 >> 0) & 0xFF) << setw(2) << ((c0 >> 8) & 0xFF) 
-       << setw(2) << ((c0 >> 16) & 0xFF) << setw(2) << ((c0 >> 24) & 0xFF);
-    ss << setw(2) << ((d0 >> 0) & 0xFF) << setw(2) << ((d0 >> 8) & 0xFF) 
-       << setw(2) << ((d0 >> 16) & 0xFF) << setw(2) << ((d0 >> 24) & 0xFF);
+    // 3. JULIAUS - XOR ir shift operacijos
+    for (size_t i = 0; i < konvertuotasInput.size(); ++i) {
+        unsigned char cByte = konvertuotasInput[i];
+        size_t ind = i % 8;
+        seed[ind] ^= ((seed[(ind + 1) % 8] << 7) | (seed[(ind + 7) % 8] >> 3));
+        seed[ind] += cByte * 131 + (seed[(ind + 3) % 8] ^ seed[(ind + 5) % 8]);
+    }
     
-    output = ss.str();
+    // 4. TĖJOS - Prime skaičiais maisymas su rotacijomis
+    const uint64_t PRIME1 = 0x9e3779b185ebca87ULL;
+    const uint64_t PRIME2 = 0xc2b2ae3d27d4eb4fULL;
+    const uint64_t PRIME3 = 0x165667b19e3779f9ULL;
+    const uint64_t PRIME4 = 0x85ebca77c2b2ae63ULL;
+    
+    for (size_t i = 0; i < konvertuotasInput.size(); ++i) {
+        uint64_t byte_val = static_cast<uint64_t>(static_cast<unsigned char>(konvertuotasInput[i]));
+        uint64_t position = i + 1;
+        byte_val ^= position * PRIME1;
+        
+        h1 ^= byte_val * PRIME1;
+        h1 = rotateLeft(h1, 13);
+        h1 *= PRIME2;
+        
+        h2 ^= byte_val * PRIME2;
+        h2 = rotateRight(h2, 17);
+        h2 += h1;
+        
+        h3 ^= byte_val * PRIME3;
+        h3 = rotateLeft(h3, 31);
+        h3 ^= h2;
+        
+        h4 ^= byte_val * PRIME4;
+        h4 = rotateRight(h4, 19);
+        h4 += h3;
+    }
+    
+    // 5. NEDOS - Value-dependent shuffle ir mixing
+    vector<int> ascii_values;
+    for (unsigned char c : konvertuotasInput) {
+        ascii_values.push_back((int)c);
+    }
+    
+    if (ascii_values.empty()) {
+        ascii_values.push_back(0);
+    }
+    
+    // Three-in-one mixer iš Nedos
+    vector<int> temp = ascii_values;
+    for (size_t i = 0; i < temp.size(); ++i) {
+        int sk = temp[i];
+        size_t e1 = (i + sk) % ascii_values.size();
+        size_t e2 = (i + sk * 2) % ascii_values.size();
+        size_t e3 = (i + sk * 3) % ascii_values.size();
+        
+        ascii_values[e1] = (ascii_values[e1] + sk) % 256;
+        ascii_values[e2] = (ascii_values[e2] + sk * 2) % 256;
+        ascii_values[e3] = (ascii_values[e3] + sk * 3) % 256;
+    }
+    
+    // 6. Mano - Random number generator maisymas
+    string seedString;
+    for (size_t i = 0; i < konvertuotasInput.size(); i += 20) {
+        int ones = 0;
+        for (size_t j = i; j < i + 20 && j < konvertuotasInput.size(); j++) {
+            bitset<8> bits(static_cast<unsigned char>(konvertuotasInput[j]));
+            ones += bits.count();
+        }
+        seedString += to_string(ones);
+    }
+    
+    uint32_t mySeed = 0;
+    for (unsigned char c : seedString) {
+        mySeed = mySeed * 31 + c;
+    }
+    mt19937 rng(mySeed);
+    
+    // 7. Gustavo - Binary permutacijos
+    // pakeista kad priimtu kai tuscias
+    string binaryData = wordToBinary(konvertuotasInput);
+   if (binaryData.empty()) {
+        binaryData = string(256, '0');
+    } else {
+        while (binaryData.size() < 256) {
+            binaryData += binaryData;
+        }
+        binaryData = binaryData.substr(0, 256);
+    }
+    
+    // Gustavo swap algoritmas
+    int amount_of_1 = 0, amount_of_0 = 0;
+    for (size_t i = 0; i < binaryData.length(); i++) {
+        if (binaryData[i] == '1') amount_of_1 += i;
+        else amount_of_0 += i;
+    }
+    
+    int swaps = abs(amount_of_1 - amount_of_0) % 10000;
+    int current = 0;
+    int step = (konvertuotasInput.length() % 100) + 1;
+    
+    for (int i = 0; i < swaps; i++) {
+        char temp_char = binaryData[current];
+        int next_pos = (current + step) % binaryData.length();
+        binaryData[current] = binaryData[next_pos];
+        binaryData[next_pos] = temp_char;
+        current = next_pos;
+    }
+    
+    // 8. XOR su RNG iš mano
+    string mixedBinary;
+    for (size_t i = 0; i < binaryData.size(); i += 32) {
+        uint32_t randVal = rng();
+        for (size_t j = 0; j < 32 && i + j < binaryData.size(); j++) {
+            int bit = binaryData[i + j] - '0';
+            int rbit = (randVal >> j) & 1;
+            bit ^= rbit;
+            mixedBinary.push_back(bit ? '1' : '0');
+        }
+    }
+    
+    // 9. FINALIZACIJA - kombinuojame visus komponentus
+    // Juliaus finalizacija
+    for (int i = 0; i < 64; ++i) {
+        size_t ind = i % 8;
+        seed[ind] ^= ((seed[(ind + 1) % 8] << ((i * 7) % 61)) | 
+                      (seed[(ind + 7) % 8] >> ((i * 5) % 53)));
+        seed[ind] += (seed[(ind + 3) % 8] ^ seed[(ind + 5) % 8]);
+    }
+    
+    // Tėjos finalizacija
+    h1 ^= konvertuotasInput.length() * PRIME1;
+    h2 ^= konvertuotasInput.length() * PRIME2;
+    h3 ^= konvertuotasInput.length() * PRIME3;
+    h4 ^= konvertuotasInput.length() * PRIME4;
+    
+    h1 += h2 + h3 + h4;
+    h2 += h1;
+    h3 += h1;
+    h4 += h1;
+    
+    // 10. GALUTINIS HEX FORMAVIMAS
+    stringstream result;
+    result << hex << setfill('0');
+    
+    // Kombinuojame Juliaus seed'ą
+    for (int i = 0; i < 4; ++i) {
+        uint64_t combined = seed[i] ^ (seed[i + 4] << 1) ^ (seed[(i + 2) % 8] >> 1);
+        result << setw(16) << combined;
+    }
+    
+    // Pridedame Tėjos hash'ą
+    result << setw(16) << h1 << setw(16) << h2 
+           << setw(16) << h3 << setw(16) << h4;
+    
+    // Pridedame binary hash'ą iš Gustavo ir mano
+    string hexFromBinary = binaryToHex(mixedBinary);
+    
+    // Kombinuojame viską į 64 simbolių hash'ą
+    string fullHash = result.str() + hexFromBinary;
+    
+    // Paimame 64 simbolius naudojant Nedos seed principą
+    string finalHash;
+    
+    for (int i = 0; i < 64; ++i) {
+        size_t idx = (i * 17 + ascii_values[i % ascii_values.size()] * 23) % fullHash.size();
+        finalHash += fullHash[idx];
+    }
+    
+    return finalHash;
 }
 
-// ===== SHA-1 Implementation =====
-
-inline uint32_t sha1_rotateLeft(uint32_t value, uint32_t bits) {
-    return (value << bits) | (value >> (32 - bits));
-}
-
-void sha1Hash(const string &input, string &output) {
-    output.clear();
-    
-    uint32_t h0 = 0x67452301;
-    uint32_t h1 = 0xEFCDAB89;
-    uint32_t h2 = 0x98BADCFE;
-    uint32_t h3 = 0x10325476;
-    uint32_t h4 = 0xC3D2E1F0;
-    
-    string msg = input;
-    uint64_t msgLen = msg.length() * 8;
-    msg += (char)0x80;
-    
-    while ((msg.length() % 64) != 56) {
-        msg += (char)0x00;
-    }
-    
-    // Append length (big-endian)
-    for (int i = 7; i >= 0; i--) {
-        msg += (char)((msgLen >> (i * 8)) & 0xFF);
-    }
-    
-    // Process message in 512-bit chunks
-    for (size_t offset = 0; offset < msg.length(); offset += 64) {
-        uint32_t w[80];
-        
-        // Break chunk into sixteen 32-bit big-endian words
-        for (int i = 0; i < 16; i++) {
-            w[i] = ((uint32_t)(unsigned char)msg[offset + i * 4 + 0] << 24) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 1] << 16) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 2] << 8) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 3]);
-        }
-        
-        // Extend the sixteen 32-bit words into eighty 32-bit words
-        for (int i = 16; i < 80; i++) {
-            w[i] = sha1_rotateLeft(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
-        }
-        
-        uint32_t a = h0, b = h1, c = h2, d = h3, e = h4;
-        
-        for (int i = 0; i < 80; i++) {
-            uint32_t f, k;
-            if (i < 20) {
-                f = (b & c) | ((~b) & d);
-                k = 0x5A827999;
-            } else if (i < 40) {
-                f = b ^ c ^ d;
-                k = 0x6ED9EBA1;
-            } else if (i < 60) {
-                f = (b & c) | (b & d) | (c & d);
-                k = 0x8F1BBCDC;
-            } else {
-                f = b ^ c ^ d;
-                k = 0xCA62C1D6;
-            }
-            
-            uint32_t temp = sha1_rotateLeft(a, 5) + f + e + k + w[i];
-            e = d;
-            d = c;
-            c = sha1_rotateLeft(b, 30);
-            b = a;
-            a = temp;
-        }
-        
-        h0 += a;
-        h1 += b;
-        h2 += c;
-        h3 += d;
-        h4 += e;
-    }
-    
-    // Produce final hash (big-endian)
-    stringstream ss;
-    ss << hex << setfill('0');
-    ss << setw(8) << h0 << setw(8) << h1 << setw(8) << h2 
-       << setw(8) << h3 << setw(8) << h4;
-    
-    output = ss.str();
-}
-
-// ===== SHA-256 Implementation =====
-
-static const uint32_t sha256_k[64] = {
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-};
-
-inline uint32_t sha256_rotr(uint32_t x, uint32_t n) { return (x >> n) | (x << (32 - n)); }
-inline uint32_t sha256_ch(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ (~x & z); }
-inline uint32_t sha256_maj(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ (x & z) ^ (y & z); }
-inline uint32_t sha256_Sigma0(uint32_t x) { return sha256_rotr(x, 2) ^ sha256_rotr(x, 13) ^ sha256_rotr(x, 22); }
-inline uint32_t sha256_Sigma1(uint32_t x) { return sha256_rotr(x, 6) ^ sha256_rotr(x, 11) ^ sha256_rotr(x, 25); }
-inline uint32_t sha256_sigma0(uint32_t x) { return sha256_rotr(x, 7) ^ sha256_rotr(x, 18) ^ (x >> 3); }
-inline uint32_t sha256_sigma1(uint32_t x) { return sha256_rotr(x, 17) ^ sha256_rotr(x, 19) ^ (x >> 10); }
-
-void sha256Hash(const string &input, string &output) {
-    output.clear();
-    
-    uint32_t h[8] = {
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    };
-    
-    string msg = input;
-    uint64_t msgLen = msg.length() * 8;
-    msg += (char)0x80;
-    
-    while ((msg.length() % 64) != 56) {
-        msg += (char)0x00;
-    }
-    
-    // Append length (big-endian)
-    for (int i = 7; i >= 0; i--) {
-        msg += (char)((msgLen >> (i * 8)) & 0xFF);
-    }
-    
-    // Process message in 512-bit chunks
-    for (size_t offset = 0; offset < msg.length(); offset += 64) {
-        uint32_t w[64];
-        
-        // Prepare message schedule
-        for (int i = 0; i < 16; i++) {
-            w[i] = ((uint32_t)(unsigned char)msg[offset + i * 4 + 0] << 24) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 1] << 16) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 2] << 8) |
-                   ((uint32_t)(unsigned char)msg[offset + i * 4 + 3]);
-        }
-        
-        for (int i = 16; i < 64; i++) {
-            w[i] = sha256_sigma1(w[i-2]) + w[i-7] + sha256_sigma0(w[i-15]) + w[i-16];
-        }
-        
-        uint32_t a = h[0], b = h[1], c = h[2], d = h[3];
-        uint32_t e = h[4], f = h[5], g = h[6], hh = h[7];
-        
-        for (int i = 0; i < 64; i++) {
-            uint32_t T1 = hh + sha256_Sigma1(e) + sha256_ch(e, f, g) + sha256_k[i] + w[i];
-            uint32_t T2 = sha256_Sigma0(a) + sha256_maj(a, b, c);
-            hh = g;
-            g = f;
-            f = e;
-            e = d + T1;
-            d = c;
-            c = b;
-            b = a;
-            a = T1 + T2;
-        }
-        
-        h[0] += a; h[1] += b; h[2] += c; h[3] += d;
-        h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
-    }
-    
-    // Produce final hash (big-endian)
-    stringstream ss;
-    ss << hex << setfill('0');
-    for (int i = 0; i < 8; i++) {
-        ss << setw(8) << h[i];
-    }
-    
-    output = ss.str();
-}
-
+// Overload funkcija senai signatūrai (main.cpp naudoja)
 void hashas(const string &ivestis, string &isvestis) 
 {
-    string konvertuotasIvestis = convertLithuanianText(ivestis);
-    // Atkomentuokite, kurio norite:
-    // md5Hash(konvertuotasIvestis, isvestis);
-    // sha1Hash(konvertuotasIvestis, isvestis);
-     sha256Hash(konvertuotasIvestis, isvestis);  
+    isvestis = hashas(ivestis);
+}
+
+// Pagalbinė funkcija (palikta backward compatibility)
+uint32_t safeStringToUint32(const string& str, const string& seedui) 
+{
+    string truncated = str;
+    if (truncated.length() > 9) {
+        truncated = truncated.substr(0, 9);
+    }
+    
+    uint32_t seed = 0;
+    for (unsigned char c : seedui) {
+        seed = seed * 31 + c; 
+    }
+    
+    uint32_t hash = seed;
+    for (unsigned char c : truncated) {
+        hash = hash * seed + c; 
+    }
+    
+    return hash;
+
 }
 

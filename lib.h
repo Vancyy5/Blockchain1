@@ -12,6 +12,7 @@
 #include <bitset>
 #include <sstream>
 #include <map>
+#include <chrono>
 #include <locale>
 #include <codecvt>
 #include <iomanip>
@@ -21,6 +22,7 @@
 #include <charconv>
 #include <cstdint>
 #include <algorithm>
+#include <array>
 #include <numeric>
 #ifdef _WIN32
 #include <windows.h>
