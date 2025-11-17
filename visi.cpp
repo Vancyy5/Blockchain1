@@ -1,5 +1,6 @@
 
 #include "visi.h"
+#include "funkcijos.h"
 #include <sstream>
 #include <iomanip>
 #include <bitset>
@@ -380,7 +381,7 @@ namespace Nedos {
     }
 }
 
-// ============ JŪSŲ (MANO) HASH - iš funkcijos.cpp ============
+// ============ MANO HASH ============
 namespace Mano {
     std::map<wchar_t, uint16_t> getLithuanianCharMap() {
         std::map<wchar_t, uint16_t> charMap;
@@ -508,60 +509,6 @@ namespace Mano {
 // ============ KOMBINUOTAS HASH ============
 namespace Visi {
     std::string hash(const std::string& input) {
-        // 1. Miglės bubble sort komponentas
-        std::vector<char> data(input.begin(), input.end());
-        std::array<uint32_t, 8> migles_seed = {0x12345678, 0x9abcdef0, 0x11111111, 0x22222222,
-                                                 0x33333333, 0x44444444, 0x55555555, 0x66666666};
-        migles_seed = Migle::bubble_sort_and_hash(data, migles_seed);
-        
-        // 2. Juliaus XOR maisymas
-        unsigned long long juliaus_seed[8] = {0x5FAF3C1BULL, 0x6E8D3B27ULL, 0xA1C5E97FULL, 0x4B7D2E95ULL,
-                                               0xF2A39C68ULL, 0x3E9B5A7CULL, 0x9D74C5A1ULL, 0x7C1A5F3EULL};
-        for (size_t i = 0; i < input.size(); ++i) {
-            unsigned char cByte = input[i];
-            size_t ind = i % 8;
-            juliaus_seed[ind] ^= ((juliaus_seed[(ind + 1) % 8] << 7) | (juliaus_seed[(ind + 7) % 8] >> 3));
-            juliaus_seed[ind] += cByte * 131 + (juliaus_seed[(ind + 3) % 8] ^ juliaus_seed[(ind + 5) % 8]);
-        }
-        
-        // 3. Tėjos rotacijos
-        uint64_t h1 = Tejos::INIT_A ^ migles_seed[0] ^ juliaus_seed[0];
-        uint64_t h2 = Tejos::INIT_B ^ migles_seed[1] ^ juliaus_seed[1];
-        uint64_t h3 = Tejos::INIT_C ^ migles_seed[2] ^ juliaus_seed[2];
-        uint64_t h4 = Tejos::INIT_D ^ migles_seed[3] ^ juliaus_seed[3];
-        
-        for (size_t i = 0; i < input.length(); i++) {
-            uint64_t byte_val = static_cast<uint64_t>(static_cast<unsigned char>(input[i]));
-            h1 ^= byte_val * Tejos::PRIME1;
-            h1 = Tejos::rotateLeft(h1, 13);
-            h2 = Tejos::rotateRight(h2, 17);
-            h3 = Tejos::rotateLeft(h3, 31);
-            h4 = Tejos::rotateRight(h4, 19);
-        }
-        
-        // 4. Nedos permutacijos
-        std::vector<int> nedos_vec;
-        for (unsigned char c : input) nedos_vec.push_back((int)c);
-        if (nedos_vec.empty()) nedos_vec.push_back(0);
-        
-        Nedos::value_dependent_shuffle(nedos_vec);
-        Nedos::three_in_one_mixer(nedos_vec);
-        
-        // 5. Finalinis maisymas
-        h1 ^= std::accumulate(nedos_vec.begin(), nedos_vec.end(), 0ULL);
-        h2 ^= migles_seed[4] + juliaus_seed[4];
-        h3 ^= migles_seed[5] + juliaus_seed[5];
-        h4 ^= migles_seed[6] + juliaus_seed[6];
-        
-        h1 = Tejos::mix(h1, h2, h3);
-        h2 = Tejos::mix(h2, h3, h4);
-        h3 = Tejos::mix(h3, h4, h1);
-        h4 = Tejos::mix(h4, h1, h2);
-        
-        std::stringstream ss;
-        ss << std::hex << std::setfill('0');
-        ss << std::setw(16) << h1 << std::setw(16) << h2 
-           << std::setw(16) << h3 << std::setw(16) << h4;
-        return ss.str();
+        return ::hashas(input);
     }
 }

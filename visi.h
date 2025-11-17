@@ -54,7 +54,7 @@ namespace Nedos {
     std::string hash(const std::string& user_input);
 }
 
-// Mano (jūsų) hash funkcija
+// Mano  hash funkcija
 namespace Mano {
     std::map<wchar_t, uint16_t> getLithuanianCharMap();
     std::string convertLithuanianText(const std::string &input);
