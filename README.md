@@ -81,4 +81,4 @@ Ir taip pat kaip reaguoja ieškomas hashas, prasidedantis iš tų pačių simbol
 
 Rezultatas: Negalima žinant gautą hash'ą ir saltą atpažinti įvesties.
 
---- 
+---  

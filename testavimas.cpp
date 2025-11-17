@@ -2,7 +2,6 @@
 
 // Efektyvumo testavimas
 void testEfficiency() {
-    
     string constitution = readConstitutionFile();
     if (constitution.empty()) {
         cout << "Nepavyko nuskaityti konstitucijos failo!" << endl;
@@ -40,20 +39,19 @@ void measureHashingTime(const string& content, int lineMultiplier, vector<double
     vector<string> lines = splitIntoLines(content);
     string testContent;
     
-    // Sukuriame testinį turinį su nurodytu eilučių skaičiumi
     for (int i = 0; i < lineMultiplier && i < static_cast<int>(lines.size()); i++) 
     {
         testContent += lines[i] + "\n";
     }
     
-    const int iterations = 5; // Pakartojimų skaičius
+    const int iterations = 5;
     
     for (int i = 0; i < iterations; i++) {
         Laikas timer("Hash testavimas " + to_string(i + 1));
         timer.pradeti();
         
         string hash_result;
-        hashas(testContent, hash_result);
+        hashWrapper(testContent, hash_result); // Naudojame wrapper
         
         timer.baigti();
         times.push_back(timer.gautiLaikoSkirtuma());
@@ -61,8 +59,6 @@ void measureHashingTime(const string& content, int lineMultiplier, vector<double
 }
 
 void createEfficiencyGraph(const vector<int>& lineCounts, const vector<double>& avgTimes) {
-  
-    // Rasti maksimalų laiką skalės nustatymui
     double maxTime = *max_element(avgTimes.begin(), avgTimes.end());
     
     for (size_t i = 0; i < lineCounts.size() && i < avgTimes.size(); i++) {
@@ -115,10 +111,9 @@ void testCollisions() {
             }
             
             string hash1, hash2;
-            hashas(str1, hash1);
-            hashas(str2, hash2);
+            hashWrapper(str1, hash1); // Naudojame wrapper
+            hashWrapper(str2, hash2); // Naudojame wrapper
             
-            // Tikriname kolizijas tarp str1 ir str2
             if (hash1 == hash2) {
                 collisions++;
             }
@@ -183,8 +178,8 @@ void testAvalancheEffect() {
             }
             
             string hash1, hash2;
-            hashas(str1, hash1);
-            hashas(str2, hash2);
+            hashWrapper(str1, hash1); // Naudojame wrapper
+            hashWrapper(str2, hash2); // Naudojame wrapper
 
             double bitDiff = calculateBitDifference(hash1, hash2);
             double hexDiff = calculateHexDifference(hash1, hash2);
@@ -228,7 +223,6 @@ double calculateBitDifference(const string& hash1, const string& hash2) {
     int totalBits = 0;
     
     for (size_t i = 0; i < hash1.length(); i++) {
-       
         int val1, val2;
         
         if (hash1[i] >= '0' && hash1[i] <= '9') {
@@ -253,7 +247,6 @@ double calculateBitDifference(const string& hash1, const string& hash2) {
             continue;
         }
         
-        // XOR ir skaičiuojame skirtingus bitus
         int xorResult = val1 ^ val2;
         for (int bit = 0; bit < 4; bit++) {
             if ((xorResult >> bit) & 1) {
@@ -283,7 +276,6 @@ double calculateHexDifference(const string& hash1, const string& hash2) {
 void testIrreversibility() {
     cout << "\n=== NEGRĮŽTAMUMO DEMONSTRACIJA ===" << endl;
     
-    // Hiding property demonstracija
     cout << "\n--- HIDING PROPERTY ---" << endl;
     demonstrateHiding("Slapta žinutė", "salt123");
     demonstrateHiding("Kita slapta žinutė", "salt123");
@@ -300,7 +292,7 @@ string addSalt(const string& input, const string& salt) {
 void demonstrateHiding(const string& message, const string& salt) {
     string saltedMessage = addSalt(message, salt);
     string hash_result;
-    hashas(saltedMessage, hash_result);
+    hashWrapper(saltedMessage, hash_result); // Naudojame wrapper
     
     cout << "Žinutė: \"" << message << "\"" << endl;
     cout << "Su salt: \"" << salt << "\"" << endl;
@@ -308,9 +300,7 @@ void demonstrateHiding(const string& message, const string& salt) {
     cout << endl;
 }
 
-// puzzle friendliness funkcija
 void demonstratePuzzleFriendliness() {
-    
     vector<string> targets = {"0000", "aaaa", "1111"}; 
     
     for (const string& target : targets) {
@@ -333,9 +323,8 @@ void demonstratePuzzleFriendliness() {
             string message = baseMessage + nonce;
             
             string hash_result;
-            hashas(message, hash_result);
+            hashWrapper(message, hash_result); // Naudojame wrapper
             
-            // Tikriname ar hash pradžia atitinka target
             if (hash_result.length() >= target.length() && 
                 hash_result.substr(0, target.length()) == target) {
                 timer.baigti();
@@ -358,7 +347,6 @@ void demonstratePuzzleFriendliness() {
             timer.baigti();
             cout << "Nepavyko rasti per " << maxAttempts << " bandymų." << endl;
         }
-        
     }
 }
 

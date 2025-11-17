@@ -4,6 +4,10 @@
 #include "lib.h"
 #include "laikas.h"
 #include "funkcijos.h"
+#include "visi.h"
+
+// Išorinė hash wrapper funkcija (apibrėžta main.cpp)
+extern void hashWrapper(const string& input, string& output);
 
 // Efektyvumo testavimas
 void testEfficiency();
@@ -14,7 +18,7 @@ void createEfficiencyGraph(const vector<int>& lineCounts, const vector<double>& 
 void testCollisions();
 void findCollisions(const vector<string>& strings, int length, int& collisions);
 
-//  Lavinos efektas
+// Lavinos efektas
 void testAvalancheEffect();
 double calculateBitDifference(const string& hash1, const string& hash2);
 double calculateHexDifference(const string& hash1, const string& hash2);
